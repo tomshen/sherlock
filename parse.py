@@ -44,17 +44,36 @@ def basic_parse(doc):
                 i += 1
     return database
 
+def parse_question(q):
+    toks = nltk.word_tokenize(q)
+    toks[0] = toks[0].lower()
+    tags = nltk.pos_tag(toks)
+    cp = nltk.RegexpParser(grammars.noun_phrase)
+    tree = cp.parse(tags)
+    subject = tree_node_to_text(tree[1])
+    query = tree_node_to_text(tree[2])
+    relation = ''
+    return (subject, query, relation)
+
+def related(subject, query, relation):
+    #ignore relation for now
+    return subject in database and query in database[subject]
+
 if __name__ == '__main__':
     with open('data/set4/a1.txt') as f:
         doc = f.read()
         database = basic_parse(doc)
+        print database
         question = None
-        while question != 'STOP':
-            question = raw_input('Ask a question of the form "Is <_> a[n] <_>?\n')
-            toks = re.split('<|>', question)
-            key = toks[1]
-            ask_value = toks[3]
-            if key in database and ask_value in database[key]:
+        while True:
+            question = raw_input('Ask a question of the form "Is _ a[n] _?\n')
+            if question == 'STOP':
+                break
+            (subject, query, relation) = parse_question(question)
+            if subject == '' or query == '': #or relation == '':
+                print "Couldn't parse."
+                continue
+            if related(subject, query, relation):
                 print('Yes!')
             else:
                 print('No!')
