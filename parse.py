@@ -77,3 +77,20 @@ if __name__ == '__main__':
                 print('Yes!')
             else:
                 print('No!')
+                
+        print("Generating questions...")
+        count = 0
+        numQuestions = 10
+        vowels = ('a','e','i','o','u','A','E','I','O','U')
+        art = ("the", "an", "a")
+        for key in database:
+            if (count >= numQuestions): break
+            else:
+                for value in database[key]:
+                    if (count < numQuestions):
+                        if value.lower().startswith(art): d = ""
+                        elif value.startswith(vowels): d = " an"
+                        else: d = " a"
+                        string = "Is %s%s %s?" % (key, d, value)
+                        print string
+                        count += 1
