@@ -20,8 +20,9 @@ Wikipedia article question answerer and asker
 {
   "The Artist": {
     "French film": {
-      "type": "IS-A", # can also be HAS-A or RELATED
-      "certainty": 0.9 # a float in the interval (0, 1]
+      "type": Relations.ISA, # can also be HASA or REL
+      "certainty": 0.9, # a float in the interval (0, 1]
+      "negative": False # allows us to capture negative statements
     },
     .
     .
