@@ -1,6 +1,12 @@
-##Under construction
+#!/usr/bin/env python
+import nltk
+import inflect
+import re
+import string
 
-import backup_answer.py
+import grammars
+import util
+import backup_answer
 
 def parse_question(q):
     toks = nltk.word_tokenize(q)

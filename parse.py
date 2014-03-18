@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 import nltk
+import inflect
 import re
 import string
 
 import grammars
 import util
-import inflect
-
-import question_answer_util.py
+import question_answer_util
 
 p = inflect.engine()
 
