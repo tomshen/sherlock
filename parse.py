@@ -5,6 +5,9 @@ import string
 
 import grammars
 import util
+import inflect
+
+p = inflect.engine()
 
 # Usage: Relations.REL, Relations.ISA, etc.
 Relations = util.enum('REL', 'ISA', 'HASA')
@@ -157,17 +160,30 @@ if __name__ == '__main__':
 
         print("Generating questions...")
         count = 0
-        numQuestions = 10
-        vowels = ('a','e','i','o','u','A','E','I','O','U')
-        art = ("the", "an", "a")
+        numQuestions = 20
+        art = ("the", "an", "a", "The")
         for key in database:
             if (count >= numQuestions): break
             else:
                 for value in database[key]:
+                    entry = database[key][value]
                     if (count < numQuestions):
-                        if value.lower().startswith(art): d = ""
-                        elif value.startswith(vowels): d = " an"
-                        else: d = " a"
-                        string = "Is %s%s %s?" % (key, d, value)
+                      key_plural = (p.compare(key, p.plural(key)) == "p:p")
+                      is_verb = "Are" if key_plural else "Is"
+                      rel_type = entry['type']
+                      if (rel_type == Relations.ISA):
+                        if not value.startswith(art):
+                            value = p.a(value) 
+                        string = "%s %s %s?" % (is_verb, key, value)
                         print string
-                        count += 1
+                      elif (rel_type == Relations.REL):
+                        string = "%s %s related to %s?" % (is_verb, key, value)
+                        print string
+                      elif (rel_type == Relations.HASA):
+                        has_verb = "Do" if key_plural else "Does"
+                        if not value.startswith(art):
+                            value = p.a(value) 
+                        string = "%s %s have %s?" % (has_verb, key, value)
+                      else:
+                        print ("question of unknown relation type: " + str(entry['type']))
+                      count += 1
