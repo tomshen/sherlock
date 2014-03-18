@@ -7,6 +7,8 @@ import grammars
 import util
 import inflect
 
+import question_answer_util.py
+
 p = inflect.engine()
 
 # Usage: Relations.REL, Relations.ISA, etc.
@@ -124,21 +126,6 @@ def basic_parse(doc):
             }
     return database
 
-def parse_question(q):
-    toks = nltk.word_tokenize(q)
-    toks[0] = toks[0].lower()
-    tags = nltk.pos_tag(toks)
-    cp = nltk.RegexpParser(grammars.noun_phrase)
-    tree = cp.parse(tags)
-    subject = tree_node_to_text(tree[1])
-    query = tree_node_to_text(tree[2])
-    relation = ''
-    return (subject, query, relation)
-
-def related(subject, query, relation):
-    #ignore relation for now
-    return subject in database and query in database[subject]
-
 if __name__ == '__main__':
     with open('data/set4/a1.txt') as f:
         doc = f.read()
@@ -150,13 +137,10 @@ if __name__ == '__main__':
             if question == 'STOP':
                 break
             (subject, query, relation) = parse_question(question)
-            if subject == '' or query == '': #or relation == '':
+            if subject == '' or query == '' or relation == '':
                 print "Couldn't parse."
                 continue
-            if related(subject, query, relation):
-                print('Yes!')
-            else:
-                print('No!')
+            print related(subject, query, relation)
 
         print("Generating questions...")
         count = 0
@@ -173,7 +157,7 @@ if __name__ == '__main__':
                       rel_type = entry['type']
                       if (rel_type == Relations.ISA):
                         if not value.startswith(art):
-                            value = p.a(value) 
+                            value = p.a(value)
                         string = "%s %s %s?" % (is_verb, key, value)
                         print string
                       elif (rel_type == Relations.REL):
@@ -182,7 +166,7 @@ if __name__ == '__main__':
                       elif (rel_type == Relations.HASA):
                         has_verb = "Do" if key_plural else "Does"
                         if not value.startswith(art):
-                            value = p.a(value) 
+                            value = p.a(value)
                         string = "%s %s have %s?" % (has_verb, key, value)
                       else:
                         print ("question of unknown relation type: " + str(entry['type']))
