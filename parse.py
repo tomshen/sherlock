@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-import nltk
 import re
 import string
+import unicodedata
+
+import nltk
 
 import grammars
 import util
@@ -12,7 +14,7 @@ import asker
 Relations = util.enum('REL', 'ISA', 'HASA')
 
 def preprocess(doc):
-    paragraphs = doc.split('\n')
+    paragraphs = unicodedata.normalize('NFKD', doc.decode('utf8')).encode('ascii', 'ignore').split('\n')
     sentences = [s for p in paragraphs for s in nltk.sent_tokenize(p) if s]
     sentences = [nltk.word_tokenize(sent) for sent in sentences]
     return sentences
@@ -105,12 +107,14 @@ def extract_generic_relations(sentence, tree):
             seen_verb = True
     return relations
 
+BAD_PUNC = set(string.punctuation) - set([',', ';', ':', '.', '!', '?'])
 def basic_parse(doc):
     sentences = preprocess(doc)
     database = {}
     for sentence in sentences:
         tagged_sentence = [(w.lower() if t[:3] != 'NNP' else w, t) for w, t in
                 nltk.pos_tag(sentence)]
+        tagged_sentence = [(w, t) for w, t in tagged_sentence if len(set(w) & BAD_PUNC) == 0]
         tree = parse_sentence(tagged_sentence, grammars.noun_phrase)
         rels = extract_is_a_relations(sentence, tree)
         rels += extract_has_a_relations(sentence, tree)
