@@ -24,10 +24,10 @@ def parse_question(q):
 
 def related(subject, query, relation, database):
     return ''
-    if subject in database:
-        if query in database[subject]:
-            if relation == database[subject][query]["type"]:
-                if relation == Relations
+    #if subject in database:
+    #    if query in database[subject]:
+    #        if relation == database[subject][query]["type"]:
+    #            if relation == Relations
 
 #ignore relation for now
     #return subject in database and query in database[subject]
