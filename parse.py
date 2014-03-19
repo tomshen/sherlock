@@ -8,7 +8,6 @@ import nltk
 import grammars
 import util
 import question_answer_util
-import asker
 
 # Usage: Relations.REL, Relations.ISA, etc.
 Relations = util.enum('REL', 'ISA', 'HASA')
@@ -129,20 +128,16 @@ def basic_parse(doc):
     return database
 
 if __name__ == '__main__':
-    with open('data/set3/a1.txt') as f:
+    with open('data/set4/a2.txt') as f:
         doc = f.read()
         database = basic_parse(doc)
-        print database
         question = None
         while True:
             question = raw_input('Ask a question of the form "Is _ a[n] _?\n')
             if question == 'STOP':
                 break
-            (subject, query, relation) = parse_question(question, doc)
+            (subject, query, relation) = parse_question(question)
             if subject == '' or query == '' or relation == '':
                 print "Couldn't parse."
                 continue
-            print related(subject, query, relation, database)
-
-        print("Generating questions...")
-        asker.ask_questions(database, 20)
+            print related(subject, query, relation)

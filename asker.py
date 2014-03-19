@@ -1,10 +1,26 @@
 import inflect
 import util
 import parse
+import sys
 
 p = inflect.engine()
 
-def ask_questions(database, numQuestions):
+try:
+    filename = sys.argv[1]
+    numQuestions = int(sys.argv[2])
+except:
+    print "Invalid filename or numQuestions"
+    filename = 'data/set4/a4.txt'
+    numQuestions = 20
+try:
+    doc = open(filename).read()
+    database = parse.basic_parse(doc)
+except:
+    print "Invalid filename: " + filename
+
+print "Generating %d questions from %s" % (numQuestions, filename)
+
+def ask_questions():
     count = 0
     art = ("the", "an", "a", "The")
     for key in database:
@@ -32,3 +48,5 @@ def ask_questions(database, numQuestions):
                     else:
                         print ("question of unknown relation type: " + str(entry['type']))
                     count += 1
+
+ask_questions()
