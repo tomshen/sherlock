@@ -13,7 +13,6 @@ Relations = util.enum('REL', 'ISA', 'HASA')
 def parse_question(q, raw):
     print >> sts.stderr, 'error parsing question, resorting to backup'
     return backup_answer(q, raw)
-    return ('', '', '')
 
     #toks = nltk.word_tokenize(q)
     #toks[0] = toks[0].lower()
@@ -25,6 +24,7 @@ def parse_question(q, raw):
     #relation = ''
     #return (subject, query, relation)
 
+#deprecated
 def related(subject, query, relation, database):
     if subject in database:
         if query in database[subject]:

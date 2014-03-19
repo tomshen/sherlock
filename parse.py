@@ -136,8 +136,7 @@ if __name__ == '__main__':
             question = raw_input('Ask a question of the form "Is _ a[n] _?\n')
             if question == 'STOP':
                 break
-            (subject, query, relation) = parse_question(question)
-            if subject == '' or query == '' or relation == '':
-                print "Couldn't parse."
-                continue
-            print related(subject, query, relation)
+            try:
+                print parse_question(question)
+            except (RuntimeError, TypeError, NameError):
+                print "Error parsing."
