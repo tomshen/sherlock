@@ -1,3 +1,7 @@
+from nltk.stem import WordNetLemmatizer
+
+wnl = WordNetLemmatizer()
+
 def enum(*sequential, **named):
     '''
     Source: http://stackoverflow.com/a/1695250
@@ -13,3 +17,11 @@ def lists_overlap(A, B):
     worse big-O runtime.
     '''
     return any(i in A for i in B)
+
+def is_plural(word):
+    '''
+    true if plural
+    '''
+    lemma = wnl.lemmatize(word, 'n')
+    plural = word is not lemma 
+    return plural
