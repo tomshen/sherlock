@@ -5,6 +5,9 @@ venv
 # C extensions
 *.so
 
+# emacs crap
+*~
+
 # Packages
 *.egg
 *.egg-info
