@@ -7,7 +7,7 @@ import nltk
 
 import grammars
 import util
-import question_answer_util
+import question_answer_util as qau
 
 # Usage: Relations.REL, Relations.ISA, etc.
 Relations = util.enum('REL', 'ISA', 'HASA')
@@ -52,7 +52,7 @@ def extract_is_a_relations(sentence, tree):
                 negative = True
         elif seen_is and el[0] == 'not':
             negative = True
-        elif seen_is and el[1][0] == 'V' and tree[i-1][0] in IS_WORDS:
+        elif seen_is and el[1][0] == 'V' and type(tree[i-1]) is not nltk.tree.Tree and tree[i-1][0] in IS_WORDS:
             seen_is = False
 
     return relations
@@ -128,15 +128,15 @@ def basic_parse(doc):
     return database
 
 if __name__ == '__main__':
-    with open('data/set4/a2.txt') as f:
+    with open('data/set2/a1.txt') as f:
         doc = f.read()
-        database = basic_parse(doc)
+        #database = basic_parse(doc)
         question = None
         while True:
             question = raw_input('Ask a question of the form "Is _ a[n] _?\n')
             if question == 'STOP':
                 break
-            try:
-                print parse_question(question)
-            except (RuntimeError, TypeError, NameError):
-                print "Error parsing."
+            #try:
+            print qau.parse_question(question, doc)
+            #except (ValueError):
+            #    print "Error parsing."

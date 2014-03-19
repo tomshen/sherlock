@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 import nltk
 import inflect
 import re
@@ -26,12 +27,17 @@ def backup_answer(q, raw):
     if len(back_data_sen) == 0:
         # populate backup database
         paragraphs = raw.split('\n')
-        sentences = [s for p in paragraphs for s in nltk.sen_tokenize(p) if s]
+        print paragraphs[0]
+        sentences = [s for p in paragraphs for s in nltk.sent_tokenize(p) if s]
+        print sentences[:4]
         sentences = [nltk.word_tokenize(sent) for sent in sentences]
-        sentences = map(lambda (x, y): x, sentences)
+        print sentences[:4]
+        sentences = [nltk.tag.pos_tag(s) for s in sentences]
+        print sentences[:4]
         for s in sentences:
             #identify objects
             tree = chunker.parse(s)
+            s = ' '.join([word for word, tag in s])
             noun_objects = leaves(tree)
             for n in noun_objects:
                 if n not in back_data_sen[s]:
@@ -44,21 +50,25 @@ def backup_answer(q, raw):
     #chunk question, look for related sentences
     related_sents = []
     objs = []
-    tree = chunker.parse(q)
+    tree = chunker.parse(nltk.tag.pos_tag(nltk.word_tokenize(q)))
     noun_objects = leaves(tree)
     for n in noun_objects:
         related_sents.extend(back_data_obj[n])
         objs.append(n)
+    print objs
     #rank related sentences by # of similar nouns
     num_related = []
     for s in related_sents:
         sent_nouns = back_data_sen[s]
-        num_related.append(len(objs(filter=lambda x: x in sent_nouns)))
+        num_related.append(len([o for o in objs if o in sent_nouns]))
+    if len(num_related) == 0:
+        #found nothing related, guess "No"
+        return "No"
     best = sorted(zip(num_related, related_sents))[0]
-    print >> sts.stderr, "Best sentence was:"
-    print >> sts.stderr, best[0], best[1]
+    print >> sys.stderr, "Best sentence was:"
+    print >> sys.stderr, best[0], best[1]
     best_nouns = back_data_sen[best[1]]
-    if len(filter(lambda x: x in best[1].split, ['who', 'what', 'when', 'where'])) > 0:
+    if len(filter(lambda x: x in best[1].split(), ['who', 'what', 'when', 'where'])) > 0:
         #find a new noun
         new_nouns = filter(lambda x: x not in noun_objects, best_nouns)
         if len(new_nouns) > 0:
@@ -71,7 +81,7 @@ def backup_answer(q, raw):
         #assume yes/no question (not why/how, because that's complicated)
         neg_sen = re.search("(not)|(n\'t)", best[1]) == None
         neg_q = re.search("(not)|(n\'t)", q) == None
-        if neg_sen == neg_q:
+        if best[0] >= 2 and neg_sen == neg_q:
             #both the sentence and the question have/don't have a negator
             return "Yes"
         else:
