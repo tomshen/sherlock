@@ -135,11 +135,11 @@ if __name__ == '__main__':
             question = raw_input('Ask a question of the form "Is _ a[n] _?\n')
             if question == 'STOP':
                 break
-            (subject, query, relation) = parse_question(question)
+            (subject, query, relation) = parse_question(question, doc)
             if subject == '' or query == '' or relation == '':
                 print "Couldn't parse."
                 continue
-            print related(subject, query, relation)
+            print related(subject, query, relation, database)
 
         print("Generating questions...")
         count = 0
