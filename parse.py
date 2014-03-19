@@ -111,7 +111,8 @@ def basic_parse(doc):
     sentences = preprocess(doc)
     database = {}
     for sentence in sentences:
-        tagged_sentence = nltk.pos_tag(sentence)
+        tagged_sentence = [(w.lower() if t[:3] != 'NNP' else w, t) for w, t in
+                nltk.pos_tag(sentence)]
         tree = parse_sentence(tagged_sentence, grammars.noun_phrase)
         rels = extract_is_a_relations(sentence, tree)
         rels += extract_has_a_relations(sentence, tree)
