@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 import nltk
-import inflect
 import re
 import string
 
 import grammars
 import util
 import question_answer_util
-
-p = inflect.engine()
+import asker
 
 # Usage: Relations.REL, Relations.ISA, etc.
 Relations = util.enum('REL', 'ISA', 'HASA')
@@ -127,7 +125,7 @@ def basic_parse(doc):
     return database
 
 if __name__ == '__main__':
-    with open('data/set4/a1.txt') as f:
+    with open('data/set3/a1.txt') as f:
         doc = f.read()
         database = basic_parse(doc)
         print database
@@ -136,38 +134,11 @@ if __name__ == '__main__':
             question = raw_input('Ask a question of the form "Is _ a[n] _?\n')
             if question == 'STOP':
                 break
-            (subject, query, relation) = parse_question(question)
+            (subject, query, relation) = parse_question(question, doc)
             if subject == '' or query == '' or relation == '':
                 print "Couldn't parse."
                 continue
-            print related(subject, query, relation)
+            print related(subject, query, relation, database)
 
         print("Generating questions...")
-        count = 0
-        numQuestions = 20
-        art = ("the", "an", "a", "The")
-        for key in database:
-            if (count >= numQuestions): break
-            else:
-                for value in database[key]:
-                    entry = database[key][value]
-                    if (count < numQuestions):
-                      key_plural = (p.compare(key, p.plural(key)) == "p:p")
-                      is_verb = "Are" if key_plural else "Is"
-                      rel_type = entry['type']
-                      if (rel_type == Relations.ISA):
-                        if not value.startswith(art):
-                            value = p.a(value)
-                        string = "%s %s %s?" % (is_verb, key, value)
-                        print string
-                      elif (rel_type == Relations.REL):
-                        string = "%s %s related to %s?" % (is_verb, key, value)
-                        print string
-                      elif (rel_type == Relations.HASA):
-                        has_verb = "Do" if key_plural else "Does"
-                        if not value.startswith(art):
-                            value = p.a(value)
-                        string = "%s %s have %s?" % (has_verb, key, value)
-                      else:
-                        print ("question of unknown relation type: " + str(entry['type']))
-                      count += 1
+        asker.ask_questions(database, 20)
