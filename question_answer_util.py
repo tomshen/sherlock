@@ -12,7 +12,7 @@ import backup_answer as b
 Relations = util.enum('REL', 'ISA', 'HASA')
 
 def parse_question(q, raw):
-    print >> sys.stderr, 'error parsing question, resorting to backup'
+    #print >> sys.stderr, 'error parsing question, resorting to backup'
     return b.backup_answer(q, raw)
 
     #toks = nltk.word_tokenize(q)

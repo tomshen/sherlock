@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import re
+import sys
 import string
 import unicodedata
 
@@ -128,7 +129,10 @@ def basic_parse(doc):
     return database
 
 if __name__ == '__main__':
-    with open('data/set2/a1.txt') as f:
+    if sys.argc < 2:
+        print 'Usage: python2.7 parse.py datafile'
+    datafile = sys.argv[1]
+    with open(datafile) as f:
         doc = f.read()
         #database = basic_parse(doc)
         question = None

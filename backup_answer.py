@@ -27,13 +27,9 @@ def backup_answer(q, raw):
     if len(back_data_sen) == 0:
         # populate backup database
         paragraphs = raw.split('\n')
-        print paragraphs[0]
         sentences = [s for p in paragraphs for s in nltk.sent_tokenize(p) if s]
-        print sentences[:4]
         sentences = [nltk.word_tokenize(sent) for sent in sentences]
-        print sentences[:4]
         sentences = [nltk.tag.pos_tag(s) for s in sentences]
-        print sentences[:4]
         for s in sentences:
             #identify objects
             tree = chunker.parse(s)
@@ -65,8 +61,8 @@ def backup_answer(q, raw):
         #found nothing related, guess "No"
         return "No"
     best = sorted(zip(num_related, related_sents))[0]
-    print >> sys.stderr, "Best sentence was:"
-    print >> sys.stderr, best[0], best[1]
+    #print >> sys.stderr, "Best sentence was:"
+    #print >> sys.stderr, best[0], best[1]
     best_nouns = back_data_sen[best[1]]
     if len(filter(lambda x: x in best[1].split(), ['who', 'what', 'when', 'where'])) > 0:
         #find a new noun
