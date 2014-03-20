@@ -51,7 +51,6 @@ def backup_answer(q, raw):
     for n in noun_objects:
         related_sents.extend(back_data_obj[n])
         objs.append(n)
-    print objs
     #rank related sentences by # of similar nouns
     num_related = []
     for s in related_sents:
