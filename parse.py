@@ -82,7 +82,7 @@ def extract_has_a_relations(sentence, tree):
                 negative = True
         elif seen_has and el[0] == 'not':
             negative = True
-        elif seen_has and el[1][0] == 'V' and tree[i-1][0] in HAS_WORDS:
+        elif seen_has and el[1][0] == 'V' and type(tree[i-1]) is not nltk.tree.Tree and tree[i-1][0] in HAS_WORDS:
             seen_has = False
     return relations
 
@@ -128,18 +128,4 @@ def basic_parse(doc):
             }
     return database
 
-if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print 'Usage: ./parse.py [data file]'
-        sys.exit()
-    datafile = sys.argv[1]
-    with open(datafile) as f:
-        doc = f.read()
-        database = basic_parse(doc)
-        question = None
-        while True:
-            question = raw_input('Ask a question of the form "Is _ a[n] _?\n')
-            if question == 'STOP':
-                break
-            print 'Answering question...'
-            print qau.parse_question(question, doc)
+

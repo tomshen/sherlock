@@ -12,18 +12,29 @@ import backup_answer as b
 Relations = util.enum('REL', 'ISA', 'HASA')
 
 def parse_question(q, raw):
-    #print >> sys.stderr, 'error parsing question, resorting to backup'
-    return b.backup_answer(q, raw)
 
-    #toks = nltk.word_tokenize(q)
-    #toks[0] = toks[0].lower()
-    #tags = nltk.pos_tag(toks)
-    #cp = nltk.RegexpParser(grammars.noun_phrase)
-    #tree = cp.parse(tags)
-    #subject = tree_node_to_text(tree[1])
-    #query = tree_node_to_text(tree[2])
-    #relation = ''
-    #return (subject, query, relation)
+    toks = nltk.word_tokenize(q)
+    toks[0] = toks[0].lower()
+    tags = nltk.pos_tag(toks)
+    cp = nltk.RegexpParser(grammars.noun_phrase)
+    tree = cp.parse(tags)
+    noun_phrases_gen = b.leaves(tree)
+    noun_phases = [n for n in noun_phrases_gen]
+
+    for n in noun_phrases:
+        if n in database:
+            for e in database[n]:
+                if e in noun_phrases:
+                    t = database[n][e]["type"]
+                    if t == Relations.ISA:
+                        return subject + " is a " + query + "."
+                    elif t == Relations.HASA:
+                        return subject + " has a " + query + "."
+                    else:
+                        return subject + " is related to " + query + "."
+
+    #print >> sys.stderr, 'error parsing question, resorting to backup'
+    return b.backup_answer(q, database, raw)
 
 #deprecated
 def related(subject, query, relation, database):
