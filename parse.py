@@ -8,7 +8,6 @@ import nltk
 
 import grammars
 import util
-import question_answer_util as qau
 
 # Usage: Relations.REL, Relations.ISA, etc.
 Relations = util.enum('REL', 'ISA', 'HASA')
@@ -115,6 +114,8 @@ def basic_parse(doc):
         tagged_sentence = [(w.lower() if t[:3] != 'NNP' else w, t) for w, t in
                 nltk.pos_tag(sentence)]
         tagged_sentence = [(w, t) for w, t in tagged_sentence if len(set(w) & BAD_PUNC) == 0]
+        if len(tagged_sentence) == 0:
+            continue
         tree = parse_sentence(tagged_sentence, grammars.noun_phrase)
         rels = extract_is_a_relations(sentence, tree)
         rels += extract_has_a_relations(sentence, tree)

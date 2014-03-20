@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 import re
 import sys
 import string
@@ -6,6 +7,7 @@ import unicodedata
 import nltk
 
 import parse as p
+import question_answer_util as qau
 
 if len(sys.argv) < 2:
     print 'Usage: ./answer.py [datafile]'
@@ -13,6 +15,7 @@ if len(sys.argv) < 2:
 datafile = sys.argv[1]
 with open(datafile) as f:
     doc = f.read()
+    print 'Generating article relation database...'
     database = p.basic_parse(doc)
     question = None
     while True:
@@ -20,4 +23,4 @@ with open(datafile) as f:
         if question == 'STOP':
             break
         print 'Answering question...'
-        print p.qau.parse_question(question, doc)
+        print qau.parse_question(question, database, doc)
