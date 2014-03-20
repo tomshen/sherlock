@@ -129,18 +129,17 @@ def basic_parse(doc):
     return database
 
 if __name__ == '__main__':
-    if sys.argc < 2:
-        print 'Usage: python2.7 parse.py datafile'
+    if len(sys.argv) < 2:
+        print 'Usage: ./parse.py [data file]'
+        sys.exit()
     datafile = sys.argv[1]
     with open(datafile) as f:
         doc = f.read()
-        #database = basic_parse(doc)
+        database = basic_parse(doc)
         question = None
         while True:
             question = raw_input('Ask a question of the form "Is _ a[n] _?\n')
             if question == 'STOP':
                 break
-            #try:
+            print 'Answering question...'
             print qau.parse_question(question, doc)
-            #except (ValueError):
-            #    print "Error parsing."
