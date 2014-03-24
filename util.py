@@ -25,9 +25,14 @@ def is_plural(word):
     '''
     true if plural
     '''
-    lemma = __wnl.lemmatize(word, 'n')
-    plural = word is not lemma
-    return plural
+    words = word.split(" ")
+    result = False
+    for word in words:
+        lemma = __wnl.lemmatize(word, 'n')
+        plural = True if word is not lemma else False
+        result = result or plural
+    return result
+
 
 def load_team_qa():
     with open('qa.json') as f:
