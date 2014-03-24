@@ -31,7 +31,17 @@ def is_plural(word):
 
 def load_team_qa():
     with open('qa.json') as f:
-        return json.load(f)
+        tqa = [qa for qa in json.load(f)[::2]]
+        for qa in tqa:
+            qa['is_bad_qns?'] = qa['is_bad_qns?'] == u'True'
+            qa['is_disfluent?'] = qa['is_disfluent?'] == u'True'
+            qa['qns_id'] = int(qa['qns_id'])
+            ans = qa['answer']
+            if ans in ['No', 'no', 'NO']:
+                qa['answer'] = 'No'
+            elif ans in ['Yes', 'yes', 'YES']:
+                qa['answer'] = 'Yes'
+        return [qa for qa in tqa if not qa['is_bad_qns?'] and not qa['is_disfluent?']]
 
 def load_article(article_path):
     with open(os.path.join('data', article_path + '.txt')) as f:
