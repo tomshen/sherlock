@@ -29,65 +29,8 @@ def tree_node_to_text(node):
     return ' '.join([w for w, pos in node.leaves()])
 
 IS_WORDS = set(['is', 'are', 'am', 'be', 'been', 'isn\'t', 'aren\'t'])
-def extract_is_a_relations(sentence, tree):
-    relations = []
-    last_noun_phrase = None
-    seen_is = False
-    negative = False
-    for i, el in enumerate(tree):
-        if type(el) is nltk.tree.Tree and el.node == 'NP':
-            if last_noun_phrase is not None and seen_is:
-                lnp = tree_node_to_text(last_noun_phrase)
-                np = tree_node_to_text(el)
-                relations.append((lnp, np, Relations.ISA, negative, 1.0))
-                last_noun_phrase = None
-                seen_is = False
-                negative = False
-            else:
-                if tree_node_to_text(el) not in string.punctuation:
-                    last_noun_phrase = el
-        elif el[0] in IS_WORDS:
-            seen_is = True
-            if 'n\'t' in el[0]:
-                negative = True
-        elif seen_is and el[0] == 'not':
-            negative = True
-        elif seen_is and el[1][0] == 'V' and type(tree[i-1]) is not nltk.tree.Tree and tree[i-1][0] in IS_WORDS:
-            seen_is = False
-
-    return relations
-
 HAS_WORDS = set(['has', 'have', 'hasn\'t', 'haven\'t'])
-def extract_has_a_relations(sentence, tree):
-    relations = []
-    last_noun_phrase = None
-    seen_has = False
-    negative = False
-    for i, el in enumerate(tree):
-        if type(el) is nltk.tree.Tree and el.node == 'NP':
-            if last_noun_phrase is not None and seen_has:
-                lnp = tree_node_to_text(last_noun_phrase)
-                np = tree_node_to_text(el)
-                relations.append((lnp, np, Relations.HASA, negative, 1.0))
-                last_noun_phrase = None
-                seen_has = False
-                negative = False
-            else:
-                if tree_node_to_text(el) not in string.punctuation:
-                    last_noun_phrase = el
-        elif el[0] in HAS_WORDS:
-            seen_has = True
-            if 'n\'t' in el[0]:
-                negative = True
-        elif seen_has and el[0] == 'not':
-            negative = True
-        elif seen_has and el[1][0] == 'V' and type(tree[i-1]) is not nltk.tree.Tree and tree[i-1][0] in HAS_WORDS:
-            seen_has = False
-    return relations
-
 def extract_generic_relations(sentence, tree):
-    def is_special_verb(v):
-        return v not in IS_WORDS and v not in HAS_WORDS
     relations = []
     last_noun_phrase = None
     seen_verb = False
@@ -96,14 +39,14 @@ def extract_generic_relations(sentence, tree):
             if last_noun_phrase is not None and seen_verb:
                 lnp = tree_node_to_text(last_noun_phrase)
                 np = tree_node_to_text(el)
-                relations.append((lnp, np, Relations.REL, False, 1.0))
+                relations.append((lnp, np, seen_verb, False, 1.0))
                 last_noun_phrase = None
                 seen_verb = False
             else:
                 if tree_node_to_text(el) not in string.punctuation:
                     last_noun_phrase = el
-        elif el[1][0] == 'V' and not is_special_verb(el[0]):
-            seen_verb = True
+        elif el[1][0] == 'V':
+            seen_verb = el[0]
     return relations
 
 BAD_PUNC = set(string.punctuation) - set([',', ';', ':', '.', '!', '?'])
@@ -117,13 +60,11 @@ def basic_parse(doc):
         if len(tagged_sentence) == 0:
             continue
         tree = parse_sentence(tagged_sentence, grammars.noun_phrase)
-        rels = extract_is_a_relations(sentence, tree)
-        rels += extract_has_a_relations(sentence, tree)
-        rels += extract_generic_relations(sentence, tree)
-        for key, val, rel_type, negative, certainty in rels:
+        rels = extract_generic_relations(sentence, tree)
+        for key, val, verb, negative, certainty in rels:
             database[key] = database.get(key, {})
             database[key][val] = {
-                'type': rel_type,
+                'verb': verb,
                 'certainty': certainty,
                 'negative': negative,
                 'pos': nltk.pos_tag(nltk.word_tokenize(val))
