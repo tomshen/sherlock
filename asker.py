@@ -4,20 +4,21 @@ import util
 import parse
 import sys
 import random
+from sets import Set
 from nltk.corpus import wordnet as wn
 
 def synonyms(word):
     syn_set = wn.synsets(word)
     if (not len(syn_set) == 0):
-        return [lemma.name for lemma in syn_set[0].lemmas]
-    else: return []
+        return Set([lemma.name for lemma in syn_set[0].lemmas])
+    else: return Set()
     
 def antonyms(word):
     syn_set = wn.synsets(word)
     if (not len(syn_set) == 0):
         L = [lemma.antonyms() for lemma in syn_set[0].lemmas]
-        return [i.name for sublist in L for i in sublist]
-    else: return []
+        return Set([i.name for sublist in L for i in sublist])
+    else: return Set()
 
 
 def ask_questions():
@@ -33,9 +34,10 @@ def ask_questions():
     else: 
         selected = random.sample(pairs, numQuestions)
     for (key, value) in selected:
-        entry = database[key][value]          
+        entry = database[key][value]
+        syn = synonyms(value)
+        if (len(syn) != 0): value = syn.pop()
         key_plural = util.is_plural(key)
-        #print key, key_plural
         is_verb = "Are" if key_plural else "Is"
         rel_type = entry['type']
         string = ""
