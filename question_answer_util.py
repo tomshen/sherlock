@@ -22,10 +22,13 @@ def parse_question(q, raw):
     noun_phases = [n for n in noun_phrases_gen]
 
     for n in noun_phrases:
+        print n
         if n in database:
             for e in database[n]:
+                print "\t", e
                 if e in noun_phrases:
                     t = database[n][e]["type"]
+                    print "\t\t", t
                     if t == Relations.ISA:
                         return subject + " is a " + query + "."
                     elif t == Relations.HASA:
