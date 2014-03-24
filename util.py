@@ -1,5 +1,6 @@
 import json
 import os
+import unicodedata
 
 from nltk.stem import WordNetLemmatizer
 
@@ -50,4 +51,5 @@ def load_team_qa():
 
 def load_article(article_path):
     with open(os.path.join('data', article_path + '.txt')) as f:
-        return f.read()
+        doc = f.read()
+        return unicodedata.normalize('NFKD', doc.decode('utf8')).encode('ascii', 'ignore')

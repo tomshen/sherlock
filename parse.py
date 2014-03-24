@@ -9,11 +9,8 @@ import nltk
 import grammars
 import util
 
-# Usage: Relations.REL, Relations.ISA, etc.
-Relations = util.enum('REL', 'ISA', 'HASA')
-
 def preprocess(doc):
-    paragraphs = unicodedata.normalize('NFKD', doc.decode('utf8')).encode('ascii', 'ignore').split('\n')
+    paragraphs = doc.split('\n')
     sentences = [s for p in paragraphs for s in nltk.sent_tokenize(p) if s]
     sentences = [nltk.word_tokenize(sent) for sent in sentences]
     return sentences
@@ -33,20 +30,20 @@ HAS_WORDS = set(['has', 'have', 'hasn\'t', 'haven\'t'])
 def extract_generic_relations(sentence, tree):
     relations = []
     last_noun_phrase = None
-    seen_verb = False
+    seen_verb = []
     for el in tree:
         if type(el) is nltk.tree.Tree and el.node == 'NP':
             if last_noun_phrase is not None and seen_verb:
                 lnp = tree_node_to_text(last_noun_phrase)
                 np = tree_node_to_text(el)
-                relations.append((lnp, np, seen_verb, False, 1.0))
+                relations.append((lnp, np, ' '.join(seen_verb), False, 1.0))
                 last_noun_phrase = None
-                seen_verb = False
+                seen_verb = []
             else:
                 if tree_node_to_text(el) not in string.punctuation:
                     last_noun_phrase = el
         elif el[1][0] == 'V':
-            seen_verb = el[0]
+            seen_verb.append(el[0])
     return relations
 
 BAD_PUNC = set(string.punctuation) - set([',', ';', ':', '.', '!', '?'])
