@@ -1,6 +1,8 @@
+import json
+
 from nltk.stem import WordNetLemmatizer
 
-wnl = WordNetLemmatizer()
+__wnl = WordNetLemmatizer()
 
 def enum(*sequential, **named):
     '''
@@ -22,6 +24,10 @@ def is_plural(word):
     '''
     true if plural
     '''
-    lemma = wnl.lemmatize(word, 'n')
-    plural = word is not lemma 
+    lemma = __wnl.lemmatize(word, 'n')
+    plural = word is not lemma
     return plural
+
+def load_team_qa():
+    with open('qa.json') as f:
+        return json.load(f)
