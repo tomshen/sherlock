@@ -125,7 +125,8 @@ def basic_parse(doc):
             database[key][val] = {
                 'type': rel_type,
                 'certainty': certainty,
-                'negative': negative
+                'negative': negative,
+                'pos': nltk.pos_tag(nltk.word_tokenize(val))
             }
     return database
 
