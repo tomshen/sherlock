@@ -1,4 +1,5 @@
 import json
+import os
 
 from nltk.stem import WordNetLemmatizer
 
@@ -31,3 +32,7 @@ def is_plural(word):
 def load_team_qa():
     with open('qa.json') as f:
         return json.load(f)
+
+def load_article(article_path):
+    with open(os.path.join('data', article_path + '.txt')) as f:
+        return f.read()
