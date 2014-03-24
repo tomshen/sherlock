@@ -23,14 +23,14 @@ def parse_question(q, database, raw):
     noun_phrases = [n for n in noun_phrase_gen]
 
     for n in noun_phrases:
-        print n
+        #print n
         if n in database:
             for e in database[n]:
-                print "\t", e
+                #print "\t", e
                 if e in toks:
                     t = database[n][e]["type"]
                     s = "not " if database[n][e]["negative"] else ""
-                    print "\t\t", t, s
+                    #print "\t\t", t, s
                     if t == Relations.ISA:
                         return n + " is " + s + "a " + e + "."
                     elif t == Relations.HASA:
