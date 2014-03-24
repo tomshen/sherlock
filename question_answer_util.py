@@ -5,28 +5,27 @@ import inflect
 import re
 import string
 
-import grammars
+import grammars as g
 import util
 import backup_answer as b
 
 Relations = util.enum('REL', 'ISA', 'HASA')
 
-def parse_question(q, raw):
+def parse_question(q, database, raw):
 
     toks = nltk.word_tokenize(q)
     toks[0] = toks[0].lower()
     tags = nltk.pos_tag(toks)
-    cp = nltk.RegexpParser(grammars.noun_phrase)
+    cp = nltk.RegexpParser(g.noun_phrase)
     tree = cp.parse(tags)
-    noun_phrases_gen = b.leaves(tree)
-    noun_phases = [n for n in noun_phrases_gen]
+    noun_phrase_gen = b.leaves(tree)
+    noun_phases = [n for n in noun_phrase_gen]
 
-    for n in noun_phrases:
-        print n
+    for n in g.noun_phrase:
         if n in database:
             for e in database[n]:
                 print "\t", e
-                if e in noun_phrases:
+                if e in g.noun_phrase:
                     t = database[n][e]["type"]
                     print "\t\t", t
                     if t == Relations.ISA:
@@ -37,7 +36,7 @@ def parse_question(q, raw):
                         return subject + " is related to " + query + "."
 
     #print >> sys.stderr, 'error parsing question, resorting to backup'
-    return b.backup_answer(q, database, raw)
+    return b.backup_answer(q, raw)
 
 #deprecated
 def related(subject, query, relation, database):
