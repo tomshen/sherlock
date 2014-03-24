@@ -14,9 +14,9 @@ Relations = util.enum('REL', 'ISA', 'HASA')
 def parse_question(q, database, raw):
     toks = nltk.word_tokenize(q)
     toks[0] = toks[0].lower()
-    print toks
+    #print toks
     tags = nltk.pos_tag(toks)
-    print tags
+    #print tags
     cp = nltk.RegexpParser(g.noun_phrase)
     tree = cp.parse(tags)
     noun_phrase_gen = b.leaves(tree)
