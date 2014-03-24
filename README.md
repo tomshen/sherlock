@@ -20,7 +20,7 @@ Wikipedia article question answerer and asker
 {
   "The Artist": {
     "Frenchromantic film": {
-      "verb": "is",
+      "verb": [('is', 'VBZ'), ...],
       "certainty": 0.9, # a float in the interval (0, 1]
       "negative": False, # allows us to capture negative statements
       "pos": [('Frenchromantic', 'JJ'), ('film', 'NN')]

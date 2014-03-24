@@ -36,14 +36,14 @@ def extract_generic_relations(sentence, tree):
             if last_noun_phrase is not None and seen_verb:
                 lnp = tree_node_to_text(last_noun_phrase)
                 np = tree_node_to_text(el)
-                relations.append((lnp, np, ' '.join(seen_verb), False, 1.0))
+                relations.append((lnp, np, seen_verb, False, 1.0))
                 last_noun_phrase = None
                 seen_verb = []
             else:
                 if tree_node_to_text(el) not in string.punctuation:
                     last_noun_phrase = el
-        elif el[1][0] == 'V':
-            seen_verb.append(el[0])
+        elif seen_verb or el[1][0] == 'V':
+            seen_verb.append(el)
     return relations
 
 BAD_PUNC = set(string.punctuation) - set([',', ';', ':', '.', '!', '?'])
