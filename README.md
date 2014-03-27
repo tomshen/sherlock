@@ -20,9 +20,9 @@ Wikipedia article question answerer and asker
 {
   "The Artist": {
     "Frenchromantic film": {
-      "verb": [('is', 'VBZ'), ...],
+      "relation": [('is', 'VBZ'), ...],
       "certainty": 0.9, # a float in the interval (0, 1]
-      "negative": False, # allows us to capture negative statements
+      "sentiment": 0.1, # a float in the interval [-1.0, 1.0]
       "pos": [('Frenchromantic', 'JJ'), ('film', 'NN')]
     },
     .
