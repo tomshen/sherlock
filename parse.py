@@ -37,8 +37,10 @@ def extract_generic_relations(sentence):
         next_np = noun_phrases[i+1]
         cur_idx = words.index(np.split(' ')[0])
         next_idx = words.index(next_np.split(' ')[0])
-        relations.append((np, next_np, words[cur_idx+1:next_idx],
-            sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
+        verb_relation = words[cur_idx+len(np.split(' ')):next_idx]
+        if len(verb_relation) > 0:
+            relations.append((np, next_np, verb_relation,
+                sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
     return relations
 
 BAD_PUNC = set(string.punctuation) - set([',', ';', ':', '.', '!', '?'])
