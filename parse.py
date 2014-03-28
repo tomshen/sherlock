@@ -5,13 +5,17 @@ import string
 import unicodedata
 
 from textblob import TextBlob
+from textblob.en.np_extractors import ConllExtractor
 
 import grammars
 import util
 
-def preprocess(doc):
+def preprocess(doc, np_extractor):
     paragraphs = [s.strip() for s in doc.split('\n') if s.strip()][1:] # strip out title
-    return TextBlob('\n'.join(paragraphs))
+    if np_extractor == 'conll':
+        return TextBlob('\n'.join(paragraphs), np_extractor=ConllExtractor())
+    else:
+        return TextBlob('\n'.join(paragraphs))
 
 def extract_generic_relations(sentence):
     relations = []
@@ -37,6 +41,11 @@ def extract_generic_relations(sentence):
         next_np = noun_phrases[i+1]
         cur_idx = words.index(np.split(' ')[0])
         next_idx = words.index(next_np.split(' ')[0])
+        is_verb = False
+        for verb in verbs:
+            if cur_idx < words.index(verb) < next_idx:
+                is_verb = True
+        if not is_verb: continue
         verb_relation = words[cur_idx+len(np.split(' ')):next_idx]
         if len(verb_relation) > 0:
             relations.append((np, next_np, verb_relation,
@@ -44,8 +53,8 @@ def extract_generic_relations(sentence):
     return relations
 
 BAD_PUNC = set(string.punctuation) - set([',', ';', ':', '.', '!', '?'])
-def basic_parse(doc):
-    blob = preprocess(doc)
+def basic_parse(doc, np_extractor='conll'):
+    blob = preprocess(doc, np_extractor)
     sentences = blob.sentences
     database = {}
     for sentence in sentences:
