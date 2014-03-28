@@ -53,3 +53,27 @@ def load_article(article_path):
     with open(os.path.join('data', article_path + '.txt')) as f:
         doc = f.read()
         return unicodedata.normalize('NFKD', doc.decode('utf8')).encode('ascii', 'ignore')
+        
+def synonyms(word, expanded):
+    '''
+    if expanded, gives extensive set of synonyms
+    '''
+    s = Set()
+    syn_set = wn.synsets(word, pos=wn.NOUN)
+    if (not len(syn_set) == 0):
+        for set in syn_set:
+            for lemma in set.lemmas:
+                if (expanded): s.add(lemma.name.replace("_", " "))
+                else:
+                    sim = wn.path_similarity(set, syn_set[0])                  
+                    if lemma.name != word and sim != None and sim > 0.3: 
+                        s.add(lemma.name.replace("_", " "))
+    return s
+    
+def antonyms(word):
+    s = Set()
+    syn_set = wn.synsets(word, pos=wn.NOUN)
+    if (not len(syn_set) == 0):
+        L = [lemma.antonyms() for lemma in syn_set[0].lemmas]
+        s = Set([i.name.replace("_", " ") for sublist in L for i in sublist])
+    return s

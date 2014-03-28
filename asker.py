@@ -5,27 +5,19 @@ import parse
 import sys
 import random
 from sets import Set
+from textblob import TextBlob, Word
 from nltk.corpus import wordnet as wn
+import string
+from textblob.taggers import NLTKTagger
 
-def synonyms(word):
-    syn_set = wn.synsets(word)
-    if (not len(syn_set) == 0):
-        return Set([lemma.name for lemma in syn_set[0].lemmas])
-    else: return Set()
-    
-def antonyms(word):
-    syn_set = wn.synsets(word)
-    if (not len(syn_set) == 0):
-        L = [lemma.antonyms() for lemma in syn_set[0].lemmas]
-        return Set([i.name for sublist in L for i in sublist])
-    else: return Set()
-
+nltk_tagger = NLTKTagger()
 
 def ask_questions():
     art = ("the", "an", "a", "The")
     pairs = []
     result = []
     for key in database:
+        if key[0] in string.punctuation: continue
         for entry in database[key]:
             pairs += [(key, entry)]
     if (numQuestions > len(pairs)):
@@ -35,28 +27,47 @@ def ask_questions():
         selected = random.sample(pairs, numQuestions)
     for (key, value) in selected:
         entry = database[key][value]
-        syn = synonyms(value)
-        if (len(syn) != 0): value = syn.pop()
+        """syn = util.synonyms(value, False)
+        if (len(syn) != 0): 
+            print "replaced " + value
+            value = random.sample(syn, 1)[0]"""
         key_plural = util.is_plural(key)
         is_verb = "Are" if key_plural else "Is"
-        rel_type = entry['type']
-        string = ""
-        if (rel_type == parse.Relations.ISA):
+        verb_phrase = entry['relation']
+        print verb_phrase
+        try:
+            verb = verb_phrase[0]
+        except: verb = "related"
+        question = ""
+        if (verb == "is"):
             if not value.startswith(art):
                 value = p.a(value)
-            string = "%s %s %s?" % (is_verb, key, value)
-        elif (rel_type == parse.Relations.REL):
-            string = "%s %s related to %s?" % (is_verb, key, value)
-        elif (rel_type == parse.Relations.HASA):
+            question = "%s %s %s?" % (is_verb, key, value)       
+        elif (verb == "has"):
             has_verb = "Do" if key_plural else "Does"
             if not value.startswith(art):
                 value = p.a(value)
-            string = "%s %s have %s?" % (has_verb, key, value)
+            question = "%s %s have %s?" % (has_verb, key, value)
         else:
-            print ("question of unknown relation type: " + str(entry['type']))
-        if (string != ""):
-            print string
-            result += [string]
+            blob = TextBlob(" ".join(verb_phrase), pos_tagger=nltk_tagger)
+            tags = blob.pos_tags
+            verbs = []
+            for w,tag in blob.pos_tags:
+                if tag[0] == "V":
+                    verbs += [(w, tag)]
+            action = [w for (w, tag) in verbs if tag != "VBZ"]
+            try:
+                w = Word(action[0])
+                question3 = "What does %s %s?" % (key,  w.lemmatize("v"))
+                print question3
+            except: pass
+            det_option = " the" if not key[0].isupper() else ""
+            question2 = "%s%s %s %s %s?" % (is_verb, det_option, key, blob, value)
+            print question2
+            question = "%s%s %s related to %s?" % (is_verb, det_option, key, value)
+        if (question != ""):
+            print question, entry['sentiment']
+            result += [question]
     return result
         
         
@@ -67,14 +78,15 @@ if __name__ == "__main__":
         filename = sys.argv[1]
         numQuestions = int(sys.argv[2])
     except:
-        print "Invalid filename or numQuestions"
-        filename = 'data/set4/a4.txt'
-        numQuestions = 20
+        print "Invalid filename or numQuestions, using default values"
+        filename = 'set4/a1'
+        numQuestions = 30
     try:
-        doc = open(filename).read()
+        doc = util.load_article(filename)
         database = parse.basic_parse(doc)
     except:
         print "Invalid filename: " + filename
+        sys.exit()
 
     print "Generating %d questions from %s" % (numQuestions, filename)
     ask_questions()
