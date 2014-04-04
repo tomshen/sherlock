@@ -11,7 +11,7 @@ import string
 from textblob.taggers import NLTKTagger
 
 
-def ask_questions(numQuestions, filename):
+def ask_questions(filename, numQuestions, debug=False):
     nltk_tagger = NLTKTagger()
     p = inflect.engine()
     try:
@@ -30,12 +30,12 @@ def ask_questions(numQuestions, filename):
     if (numQuestions > len(pairs)):
         print "Not enough entries... :("
         return
-    else: 
+    else:
         selected = random.sample(pairs, numQuestions)
     for (key, value) in selected:
         entry = database[key][value]
         """syn = util.synonyms(value, False)
-        if (len(syn) != 0): 
+        if (len(syn) != 0):
             print "replaced " + value
             value = random.sample(syn, 1)[0]"""
         key_plural = util.is_plural(key)
@@ -49,7 +49,7 @@ def ask_questions(numQuestions, filename):
         if (verb == "is"):
             if not value.startswith(art):
                 value = p.a(value)
-            question = "%s %s %s?" % (is_verb, key, value)       
+            question = "%s %s %s?" % (is_verb, key, value)
         elif (verb == "has"):
             has_verb = "Do" if key_plural else "Does"
             if not value.startswith(art):
@@ -76,8 +76,8 @@ def ask_questions(numQuestions, filename):
             print question
             result += [question]
     return result
-        
-        
+
+
 if __name__ == "__main__":
 
     try:
@@ -87,6 +87,6 @@ if __name__ == "__main__":
         #print "Invalid filename or numQuestions, using default values"
         filename = 'set4/a1'
         numQuestions = 30
-        
+
     #print "Generating %d questions from %s" % (numQuestions, filename)
     ask_questions(numQuestions, filename)
