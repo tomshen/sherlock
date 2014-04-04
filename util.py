@@ -49,11 +49,11 @@ def load_team_qa():
                 qa['answer'] = 'Yes'
         return [qa for qa in tqa if not qa['is_bad_qns?'] and not qa['is_disfluent?']]
 
-def load_article(article_path):
-    with open(os.path.join('data', article_path + '.txt')) as f:
+def load_article(filename):
+    with open(filename) as f:
         doc = f.read()
         return unicodedata.normalize('NFKD', doc.decode('utf8')).encode('ascii', 'ignore')
-        
+
 def synonyms(word, expanded):
     '''
     if expanded, gives extensive set of synonyms
@@ -65,11 +65,11 @@ def synonyms(word, expanded):
             for lemma in set.lemmas:
                 if (expanded): s.add(lemma.name.replace("_", " "))
                 else:
-                    sim = wn.path_similarity(set, syn_set[0])                  
-                    if lemma.name != word and sim != None and sim > 0.3: 
+                    sim = wn.path_similarity(set, syn_set[0])
+                    if lemma.name != word and sim != None and sim > 0.3:
                         s.add(lemma.name.replace("_", " "))
     return s
-    
+
 def antonyms(word):
     s = Set()
     syn_set = wn.synsets(word, pos=wn.NOUN)

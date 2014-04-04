@@ -11,7 +11,7 @@ import string
 from textblob.taggers import NLTKTagger
 
 
-def ask_questions(numQuestions, filename):
+def ask_questions(filename, numQuestions, debug=False):
     nltk_tagger = NLTKTagger()
     p = inflect.engine()
     try:
@@ -88,4 +88,4 @@ if __name__ == "__main__":
         numQuestions = 30
         
     #print "Generating %d questions from %s" % (numQuestions, filename)
-    ask_questions(numQuestions, filename)
+    ask_questions(filename, numQuestions)
