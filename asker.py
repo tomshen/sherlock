@@ -28,8 +28,7 @@ def ask_questions(numQuestions, filename):
         for entry in database[key]:
             pairs += [(key, entry)]
     if (numQuestions > len(pairs)):
-        print "Not enough entries... :("
-        return
+        selected = random.sample(pairs, len(pairs))
     else: 
         selected = random.sample(pairs, numQuestions)
     for (key, value) in selected:
