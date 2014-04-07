@@ -12,8 +12,32 @@ import grammars as g
 import util
 import backup_answer as b
 import parse as p
+import sentence_edit_distance as edit
 
 Relations = util.enum('REL', 'ISA', 'HASA')
+
+def get_similar_np(np, data):
+    #requires pos for top-level entries
+    def db_pos(entry):
+        tags = data[entry]["pos"]
+        return [(word, tag) for word, tag in tags if tag[0] == "N"]
+    def sim(np1words, np2):
+        c = 0.0
+        for word in np1words:
+            if word in np2.split():
+                c += 1.0
+        return c / len(np1words)
+    np = [word for (word, tag) in np if tag[0] == "N"]
+    sim_scores = [(sim(np, db_pos(entry)), entry) for entry in data]
+    best, entry = max(sim_scores)
+    if best > 0:
+        return entry
+    return None
+
+def get_np_tags(np, q):
+    words = np.split()
+    loc = q.words.lower().index(words[0])
+    return q.tags[loc:loc+len(words)]
 
 def parse_yn(q, database):
     words = q.words
@@ -39,19 +63,40 @@ def parse_yn(q, database):
         print >> sys.stderr, nextword, nexttag
         nextnp = ""
         for np in nps:
-            if np.start == nexti:
+            if words.lower().index(np.split()[0]) == nexti:
                 nextnp = np
                 break
+        subj_tags = get_np_tags(subj, q)
         if nextnp != "":
             #if yes then look to see if they are related in the db
-            return "placeholder!"
+            nextnp_tags = get_np_tags(nextnp, q)
+            close = get_similar_np(subj_tags, database)
+            if close:
+                closer = getsimilar_np(nextnp_tags, database[close])
+                if closer:
+                    return "Yes."
+                else:
+                    return "No."
+            close = get_similar_np(nextnp_tags, database)
+            if close:
+                closer = getsimilar_np(subj_tags, database[close])
+                if closer:
+                    return "Yes."
+                else:
+                    return "No."
+            return "Placeholder."
         #otherwise, assume it's an adjective phrase
         else:
             #rebuild sentence fragments from database
+            close = get_similar_np(subj_tags, database)
+            rel_tags = [database[close][e]["relation"].extend(database[close][e]["pos"])
+                        for e in database[close]]
+            rel = [word for word, tag in rel_tags]
             #compare to the AP
-            #if one matches, -> yes
-            #else -> no
-            return "No"
+            best, relation = edit.distance(words[nexti:], rel)
+            if best > 0:
+                return "Yes."
+            return "No."
     elif first.lower() in ['does','did','will']:
         #question is a "does/did/will ___ VP"
         return "No"
@@ -87,12 +132,17 @@ def parse_question(q, database, raw):
                     else:
                         return n + " is " + s + "related to " + e + "."
 
-    print >> sys.stderr, 'error parsing question, resorting to backup'
-    return b.backup_answer(q, raw)
+    return parse_yn(TextBlob(q), database)
+    #print >> sys.stderr, 'error parsing question, resorting to backup'
+    #return b.backup_answer(q, raw)
 
 if __name__ == "__main__":
     q = raw_input("Ask a question\n")
     q = TextBlob(q, np_extractor=extractor)
     print q.noun_phrases
+    first =  q.noun_phrases[0]
+    firstsp = first.split()
+    loc = q.words.lower().index(firstsp[0])
+    print q.tags[loc:loc+len(firstsp)]
     print q.parse()
     print p.extract_generic_relations(q)
