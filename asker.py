@@ -39,7 +39,7 @@ def ask_questions(filename, numQuestions, debug=False):
             value = random.sample(syn, 1)[0]"""
         key_plural = util.is_plural(key)
         is_verb = "Are" if key_plural else "Is"
-        verb_phrase = entry['relation']
+        verb_phrase = [verb[0] for verb in entry['relation']]
         #print verb_phrase
         try:
             verb = verb_phrase[0]
@@ -63,9 +63,15 @@ def ask_questions(filename, numQuestions, debug=False):
                     verbs += [(w, tag)]
             action = [w for (w, tag) in verbs if tag != "VBZ"]
             det_option = " the" if not key[0].isupper() else ""
-
+            #print " ".join(verb_phrase)
+            #print value
             for (w, tag) in verbs:
-                question3 = "What does%s %s %s?" % (det_option, key,  w.lemmatize("v"))
+                if w.lemmatize("v") != "be":
+                    if tag == "VBD": does_verb = "did"
+                    else: does_verb = "does"
+                    question3 = "What %s%s %s %s?" % (det_option.capitalize(), does_verb, key, w.lemmatize("v"))
+                else:
+                    question3 = "%s%s %s %s?" % (w, det_option, key, value)
                 #print question3
             det_option = " the" if not key[0].isupper() else ""
             question2 = "%s%s %s %s %s?" % (is_verb, det_option, key, blob, value)
@@ -84,7 +90,7 @@ if __name__ == "__main__":
         numQuestions = int(sys.argv[2])
     except:
         #print "Invalid filename or numQuestions, using default values"
-        filename = 'set4/a1'
+        filename = 'data/set1/a1.txt'
         numQuestions = 30
         
     #print "Generating %d questions from %s" % (numQuestions, filename)
