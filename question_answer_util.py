@@ -19,12 +19,16 @@ Relations = util.enum('REL', 'ISA', 'HASA')
 def get_similar_np(np, data):
     #requires pos for top-level entries
     def db_pos(entry):
-        tags = data[entry]["pos"]
-        return [(word, tag) for word, tag in tags if tag[0] == "N"]
+        tags = []
+        if "pos" in data[entry]:
+            tags = data[entry]["pos"]
+        else:
+            tags = TextBlob(entry).tags
+        return [word for word, tag in tags if tag[0] == "N"]
     def sim(np1words, np2):
         c = 0.0
         for word in np1words:
-            if word in np2.split():
+            if word in np2:
                 c += 1.0
         return c / len(np1words)
     np = [word for (word, tag) in np if tag[0] == "N"]
@@ -40,24 +44,18 @@ def get_np_tags(np, q):
     return q.tags[loc:loc+len(words)]
 
 def parse_yn(q, database):
-    words = q.words
+    words = q.words.lower()
     nps = q.noun_phrases
     subj = nps[0] #assuming subject is the first noun phrase
+    print >> sys.stderr, "Subject:", subj
     first = words[0]
 
     if first.lower() in ['is','was']: #is this everything?
         #question is an "is/was ___ NP/AP"
         #get index of the first word after the noun phrase
-        n = len(subj.split())
-        next = ""
-        nexti = 0
-        for i in xrange(0, len(words) - n - 1):
-            if subj == " ".join(words[i:i+n]):
-                next = words[i+n]
-                nexti = i+n
-                break
-        if next == "":
-            print >> sys.stderr, "something bad happened."
+        subj_words = subj.split()
+        loc = words.index(subj_words[0])
+        nexti = loc + len(subj_words)
         #is that part of its own noun phrase? (det. or noun)
         nextword, nexttag = q.tags[nexti]
         print >> sys.stderr, nextword, nexttag
@@ -89,6 +87,8 @@ def parse_yn(q, database):
         else:
             #rebuild sentence fragments from database
             close = get_similar_np(subj_tags, database)
+            if close == None:
+                return "No."
             rel_tags = [database[close][e]["relation"].extend(database[close][e]["pos"])
                         for e in database[close]]
             rel = [word for word, tag in rel_tags]
@@ -132,7 +132,7 @@ def parse_question(q, database, raw):
                     else:
                         return n + " is " + s + "related to " + e + "."
 
-    return parse_yn(TextBlob(q), database)
+    return parse_yn(TextBlob(q, np_extractor=extractor), database)
     #print >> sys.stderr, 'error parsing question, resorting to backup'
     #return b.backup_answer(q, raw)
 

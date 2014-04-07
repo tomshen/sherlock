@@ -29,5 +29,5 @@ for k in database.keys()[:5]:
 
 question = None
 for question in open(qfile, 'rb').readlines():
-    print >> sys.stderr, 'Answering question:', question
+    print >> sys.stderr, 'Answering question:', question.strip()
     print qau.parse_question(question, database, doc)
