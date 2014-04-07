@@ -7,20 +7,27 @@ import unicodedata
 import nltk
 
 import parse as p
+import util
 import question_answer_util as qau
 
-if len(sys.argv) < 2:
-    print 'Usage: ./answer.py [datafile]'
+if len(sys.argv) < 3:
+    print 'Usage: ./answer [datafile] [questionfile]'
     sys.exit()
 datafile = sys.argv[1]
-with open(datafile) as f:
-    doc = f.read()
-    print 'Generating article relation database...'
-    database = p.basic_parse(doc)
-    question = None
-    while True:
-        question = raw_input('Ask a question of the form "Is _ a[n] _?\n')
-        if question == 'STOP':
-            break
-        print 'Answering question...'
-        print qau.parse_question(question, database, doc)
+qfile = sys.argv[2]
+doc = util.load_article(datafile)
+print >> sys.stderr, 'Generating article relation database...'
+database = p.basic_parse(doc)
+"""
+for k in database.keys()[:5]:
+    print k
+    for e in database[k]:
+        print "\t", e
+        for v in database[k][e]:
+            print "\t\t", database[k][e][v]
+"""
+
+question = None
+for question in open(qfile, 'rb').readlines():
+    print >> sys.stderr, 'Answering question:', question.strip()
+    print qau.parse_question(question, database, doc)
