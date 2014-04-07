@@ -17,7 +17,7 @@ datafile = sys.argv[1]
 qfile = sys.argv[2]
 doc = util.load_article(datafile)
 print >> sys.stderr, 'Generating article relation database...'
-database = p.basic_parse(doc)
+database = p.basic_parse(doc, np_extractor=p.SuperNPExtractor())
 """
 for k in database.keys()[:5]:
     print k

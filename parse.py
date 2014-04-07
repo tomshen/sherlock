@@ -58,7 +58,7 @@ def extract_generic_relations(sentence):
             if cur_idx < words.index(verb) < next_idx:
                 is_verb = True
         if not is_verb: continue
-        verb_relation = words[cur_idx+len(np.split(' ')):next_idx]
+        verb_relation = sentence.tags[cur_idx+len(np.split(' ')):next_idx]
         if len(verb_relation) > 0:
             relations.append((np, next_np, verb_relation,
                 sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))

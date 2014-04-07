@@ -5,8 +5,6 @@ import inflect
 import re
 import string
 from textblob import TextBlob
-from textblob.np_extractors import ConllExtractor
-extractor = ConllExtractor()
 
 import grammars as g
 import util
@@ -14,6 +12,7 @@ import backup_answer as b
 import parse as p
 import sentence_edit_distance as edit
 
+extractor = p.SuperNPExtractor()
 Relations = util.enum('REL', 'ISA', 'HASA')
 
 def get_similar_np(np, data):
@@ -23,7 +22,7 @@ def get_similar_np(np, data):
         if "pos" in data[entry]:
             tags = data[entry]["pos"]
         else:
-            tags = TextBlob(entry).tags
+            tags = TextBlob(entry, np_extractor=extractor).tags
         return [word for word, tag in tags if tag[0] == "N"]
     def sim(np1words, np2):
         c = 0.0
@@ -46,6 +45,9 @@ def get_np_tags(np, q):
 def parse_yn(q, database):
     words = q.words.lower()
     nps = q.noun_phrases
+    if len(nps) == 0:
+        print >> sys.stderr, "No subject found"
+        return "No"
     subj = nps[0] #assuming subject is the first noun phrase
     print >> sys.stderr, "Subject:", subj
     first = words[0]
@@ -57,8 +59,8 @@ def parse_yn(q, database):
         loc = words.index(subj_words[0])
         nexti = loc + len(subj_words)
         #is that part of its own noun phrase? (det. or noun)
-        nextword, nexttag = q.tags[nexti]
-        print >> sys.stderr, nextword, nexttag
+        # nextword, nexttag = q.tags[nexti]
+        # print >> sys.stderr, nextword, nexttag
         nextnp = ""
         for np in nps:
             if words.lower().index(np.split()[0]) == nexti:
@@ -89,8 +91,8 @@ def parse_yn(q, database):
             close = get_similar_np(subj_tags, database)
             if close == None:
                 return "No."
-            rel_tags = [database[close][e]["relation"].extend(database[close][e]["pos"])
-                        for e in database[close]]
+            rel_tags = reduce(lambda x,y: x+y, [database[close][e]["relation"]
+                + database[close][e]["pos"] for e in database[close]])
             rel = [word for word, tag in rel_tags]
             #compare to the AP
             best, relation = edit.distance(words[nexti:], rel)
@@ -106,6 +108,7 @@ def parse_wh(q, database):
     return ""
 
 def parse_question(q, database, raw):
+    '''
     toks = nltk.word_tokenize(q)
     toks[0] = toks[0].lower()
     #print toks
@@ -131,7 +134,7 @@ def parse_question(q, database, raw):
                         return n + " has " + s + "a " + e + "."
                     else:
                         return n + " is " + s + "related to " + e + "."
-
+    '''
     return parse_yn(TextBlob(q, np_extractor=extractor), database)
     #print >> sys.stderr, 'error parsing question, resorting to backup'
     #return b.backup_answer(q, raw)
