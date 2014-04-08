@@ -15,7 +15,7 @@ import sentence_edit_distance as edit
 extractor = p.SuperNPExtractor()
 Relations = util.enum('REL', 'ISA', 'HASA')
 
-def get_similar_np(np, data):
+def get_similar_np(np_tags, data):
     #requires pos for top-level entries
     def db_pos(entry):
         tags = []
@@ -30,7 +30,15 @@ def get_similar_np(np, data):
             if word in np2:
                 c += 1.0
         return c / len(np1words)
-    np = [word for (word, tag) in np if tag[0] == "N"]
+    np = np_tags
+    np_filter = [word for (word, tag) in np if tag[0] == "N"]
+    if len(np_filter) == 0:
+        print >> sys.stderr, "Noun phrase without nouns:", np_tags
+        np = [word for word, tag in np]
+        if " ".join(np) in data:
+            return " ".join(np)
+        print >> sys.stderr, "Not in dictionary"
+        return None
     sim_scores = [(sim(np, db_pos(entry)), entry) for entry in data]
     best, entry = max(sim_scores)
     if best > 0:
