@@ -36,7 +36,7 @@ def extract_verb_phrases(blob):
     verb_phrases = []
     for child in tree:
         if type(child) == nltk.tree.Tree and child.node == 'VP':
-            verb_phrases.append(' '.join(w[0] for w in child.flatten()))
+            verb_phrases.append([w[0] for w in child.flatten()])
     return verb_phrases
 
 def extract_generic_relations(sentence):
@@ -64,15 +64,11 @@ def extract_generic_relations(sentence):
         next_idx = words.index(next_np.split(' ')[0])
         is_verb = False
         for verb_phrase in verb_phrases:
-            try:
-                if cur_idx < sentence.index(verb_phrase.split()[0]) < next_idx:
-                    sentiment = TextBlob(' '.join(words[cur_idx:next_idx])).sentiment.polarity
-                    relations.append((np, next_np, verb_phrase,
-                        sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
-                    break
-            except:
-                print verb_phrase, sentence
-                sys.exit()
+            if cur_idx < sentence.index(verb_phrase[0]) < next_idx:
+                sentiment = TextBlob(' '.join(words[cur_idx:next_idx])).sentiment.polarity
+                relations.append((np, next_np, verb_phrase,
+                    sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
+                break
     return relations
 
 BAD_PUNC = set(string.punctuation) - set([',', ';', ':', '.', '!', '?'])

@@ -6,7 +6,7 @@ _noun_phrase = r'''
 #taken from https://gist.github.com/alexbowe/879414
 noun_phrase = r"""
   NBAR:
-    {<NN.*|JJ>*<NN.*>}  # Nouns and Adjectives, terminated with Nouns
+    {<DT|PRP|PRP\$|PRP>*<NN.*|JJ>*<NN.*>}  # Nouns and Adjectives, terminated with Nouns
 
   NP:
     {<NBAR>}
@@ -16,4 +16,8 @@ noun_phrase = r"""
 verb_phrase = r'''
   VP: {.*<VB|VBD|VBG|VBN|VBP|VBZ>+.*}
 
+'''
+
+clause = noun_phrase + verb_phrase + r'''
+  CLS: {<NP>.*<VP>.*<NP>*}
 '''
