@@ -39,7 +39,7 @@ def extract_verb_phrases(blob):
             verb_phrases.append([w[0] for w in child.flatten()])
     return verb_phrases
 
-def extract_generic_relations(sentence):
+def extract_generic_relations(sentence, verb_phrases_only):
     relations = []
     noun_phrases = sentence.noun_phrases
     words = sentence.words
@@ -62,22 +62,36 @@ def extract_generic_relations(sentence):
         next_np = noun_phrases[i+1]
         cur_idx = words.index(np.split(' ')[0])
         next_idx = words.index(next_np.split(' ')[0])
-        is_verb = False
-        for verb_phrase in verb_phrases:
-            if cur_idx < sentence.index(verb_phrase[0]) < next_idx:
-                sentiment = TextBlob(' '.join(words[cur_idx:next_idx])).sentiment.polarity
-                relations.append((np, next_np, verb_phrase,
+
+        if not verb_phrases_only:
+            is_verb = False
+            for verb in [w for w, pos in sentence.tags if pos[0] == 'V']:
+                try:
+                    if cur_idx < words.index(verb) < next_idx:
+                        is_verb = True
+                except:
+                    continue
+            if not is_verb: continue
+            verb_relation = sentence.tags[cur_idx+len(np.split(' ')):next_idx]
+            if len(verb_relation) > 0:
+                relations.append((np, next_np, verb_relation,
                     sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
-                break
+        else:
+            for verb_phrase in verb_phrases:
+                if cur_idx < sentence.index(verb_phrase[0]) < next_idx:
+                    sentiment = TextBlob(' '.join(words[cur_idx:next_idx])).sentiment.polarity
+                    relations.append((np, next_np, verb_phrase,
+                        sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
+                    break
     return relations
 
 BAD_PUNC = set(string.punctuation) - set([',', ';', ':', '.', '!', '?'])
-def basic_parse(doc, np_extractor=None):
+def basic_parse(doc, np_extractor=None, verb_phrases_only=False):
     blob = preprocess(doc, np_extractor)
     sentences = blob.sentences
     database = {}
     for sentence in sentences:
-        rels = extract_generic_relations(sentence)
+        rels = extract_generic_relations(sentence, verb_phrases_only)
         for key, val, relation, sentiment, certainty, pos in rels:
             database[key] = database.get(key, {})
             database[key][val] = {
