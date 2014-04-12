@@ -4,6 +4,7 @@ import sys
 import string
 import unicodedata
 
+import nltk
 from textblob import TextBlob
 from textblob.base import BaseNPExtractor
 from textblob.en.np_extractors import FastNPExtractor, ConllExtractor
@@ -29,6 +30,15 @@ def preprocess(doc, np_extractor=None):
     else:
         return TextBlob('\n'.join(paragraphs), np_extractor=SuperNPExtractor())
 
+def extract_verb_phrases(blob):
+    cp = nltk.RegexpParser(grammars.verb_phrase)
+    tree = cp.parse(blob.tags)
+    verb_phrases = []
+    for child in tree:
+        if type(child) == nltk.tree.Tree and child.node == 'VP':
+            verb_phrases.append(' '.join(w[0] for w in child.flatten()))
+    return verb_phrases
+
 def extract_generic_relations(sentence):
     relations = []
     noun_phrases = sentence.noun_phrases
@@ -45,8 +55,7 @@ def extract_generic_relations(sentence):
         except:
             continue
     noun_phrases = new_noun_phrases
-    sentiment = sentence.sentiment.polarity
-    verbs = [w for w, pos in sentence.tags if pos[0] == 'V']
+    verb_phrases = extract_verb_phrases(sentence)
 
     for i in xrange(len(noun_phrases)-1):
         np = noun_phrases[i]
@@ -54,17 +63,16 @@ def extract_generic_relations(sentence):
         cur_idx = words.index(np.split(' ')[0])
         next_idx = words.index(next_np.split(' ')[0])
         is_verb = False
-        for verb in verbs:
+        for verb_phrase in verb_phrases:
             try:
-                if cur_idx < words.index(verb) < next_idx:
-                    is_verb = True
+                if cur_idx < sentence.index(verb_phrase.split()[0]) < next_idx:
+                    sentiment = TextBlob(' '.join(words[cur_idx:next_idx])).sentiment.polarity
+                    relations.append((np, next_np, verb_phrase,
+                        sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
+                    break
             except:
-                continue
-        if not is_verb: continue
-        verb_relation = sentence.tags[cur_idx+len(np.split(' ')):next_idx]
-        if len(verb_relation) > 0:
-            relations.append((np, next_np, verb_relation,
-                sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
+                print verb_phrase, sentence
+                sys.exit()
     return relations
 
 BAD_PUNC = set(string.punctuation) - set([',', ';', ':', '.', '!', '?'])

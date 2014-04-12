@@ -12,3 +12,8 @@ noun_phrase = r"""
     {<NBAR>}
     {<NBAR><IN><NBAR>}  # Above, connected with in/of/etc...
 """
+
+verb_phrase = r'''
+  VP: {.*<VB|VBD|VBG|VBN|VBP|VBZ>+.*}
+
+'''
