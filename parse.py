@@ -55,8 +55,11 @@ def extract_generic_relations(sentence):
         next_idx = words.index(next_np.split(' ')[0])
         is_verb = False
         for verb in verbs:
-            if cur_idx < words.index(verb) < next_idx:
-                is_verb = True
+            try:
+                if cur_idx < words.index(verb) < next_idx:
+                    is_verb = True
+            except:
+                continue
         if not is_verb: continue
         verb_relation = sentence.tags[cur_idx+len(np.split(' ')):next_idx]
         if len(verb_relation) > 0:
@@ -80,5 +83,3 @@ def basic_parse(doc, np_extractor=None):
                 'pos': pos
             }
     return database
-
-
