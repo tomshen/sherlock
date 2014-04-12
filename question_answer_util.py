@@ -17,6 +17,8 @@ Relations = util.enum('REL', 'ISA', 'HASA')
 
 def get_similar_np(np_tags, data):
     #requires pos for top-level entries
+    print >> sys.stderr, "\t\tgetting similar for:", " ".join([
+            word for word, tag in np_tags])
     def db_pos(entry):
         tags = []
         if "pos" in data[entry]:
@@ -26,22 +28,25 @@ def get_similar_np(np_tags, data):
         return [word for word, tag in tags if tag[0] == "N"]
     def sim(np1words, np2):
         c = 0.0
+        #print >> sys.stderr, "\t\t\tdatabase keys:", np2
         for word in np1words:
             if word in np2:
-                c += 1.0
-        return c / len(np1words)
+                c -= 1.0
+        return c
     np = np_tags
     np_filter = [word for (word, tag) in np if tag[0] == "N"]
+    print >> sys.stderr, "\t\tfiltered:", " ".join(np_filter)
     if len(np_filter) == 0:
-        print >> sys.stderr, "Noun phrase without nouns:", np_tags
+        print >> sys.stderr, "\t\tNoun phrase without nouns:", np_tags
         np = [word for word, tag in np]
         if " ".join(np) in data:
             return " ".join(np)
-        print >> sys.stderr, "Not in dictionary"
+        print >> sys.stderr, "\t\tNot in dictionary"
         return None
-    sim_scores = [(sim(np, db_pos(entry)), entry) for entry in data]
-    best, entry = max(sim_scores)
-    if best > 0:
+    sim_scores = [(sim(np_filter, db_pos(entry)), entry) for entry in data]
+    sim_scores = [(score, len(entry), entry) for score, entry in sim_scores]
+    best, l, entry = min(sim_scores)
+    if best != 0:
         return entry
     return None
 
@@ -53,15 +58,17 @@ def get_np_tags(np, q):
 def parse_yn(q, database):
     words = q.words.lower()
     nps = q.noun_phrases
+    tags = q.tags
     if len(nps) == 0:
         print >> sys.stderr, "No subject found"
         return "No"
     subj = nps[0] #assuming subject is the first noun phrase
-    print >> sys.stderr, "Subject:", subj
+    print >> sys.stderr, "\tSubject:", subj
     first = words[0]
 
     if first.lower() in ['is','was']: #is this everything?
         #question is an "is/was ___ NP/AP"
+        print >> sys.stderr, "\tis/was"
         #get index of the first word after the noun phrase
         subj_words = subj.split()
         loc = words.index(subj_words[0])
@@ -77,8 +84,10 @@ def parse_yn(q, database):
         subj_tags = get_np_tags(subj, q)
         if nextnp != "":
             #if yes then look to see if they are related in the db
+            print >> sys.stderr, "\tfound nextnp:", nextnp
             nextnp_tags = get_np_tags(nextnp, q)
             close = get_similar_np(subj_tags, database)
+            print >> sys.stderr, "\t\tclose is:", close
             if close:
                 closer = getsimilar_np(nextnp_tags, database[close])
                 if closer:
@@ -92,19 +101,21 @@ def parse_yn(q, database):
                     return "Yes."
                 else:
                     return "No."
-            return "Placeholder."
+            return "No."
         #otherwise, assume it's an adjective phrase
         else:
+            print >> sys.stderr, "\tAP/VP"
             #rebuild sentence fragments from database
             close = get_similar_np(subj_tags, database)
+            print >> sys.stderr, "\tclose is:", close
             if close == None:
                 return "No."
-            rel_tags = reduce(lambda x,y: x+y, [database[close][e]["relation"]
-                + database[close][e]["pos"] for e in database[close]])
-            rel = [word for word, tag in rel_tags]
+            rel_tags = [database[close][e]["relation"]
+                        + database[close][e]["pos"] for e in database[close]]
+            #rel = [[word for word, tag in e] for e in rel_tags]
             #compare to the AP
-            best, relation = edit.distance(words[nexti:], rel)
-            if best > 0:
+            best, relation = edit.distance(tags[nexti:], rel_tags)
+            if best < 7:
                 return "Yes."
             return "No."
     elif first.lower() in ['does','did','will']:
