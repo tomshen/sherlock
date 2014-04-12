@@ -34,7 +34,7 @@ def main():
     correct = 0
     for qa in easy_questions:
         if qa['path'] not in articles:
-            doc = util.load_article(qa['path'])
+            doc = util.load_article('data/' + qa['path'] + '.txt')
             database = parse.basic_parse(doc)
             articles[qa['path']] = (doc, database)
         doc, database = articles[qa['path']]
