@@ -74,6 +74,7 @@ def extract_generic_relations(sentence, verb_phrases_only):
             if not is_verb: continue
             verb_relation = sentence.tags[cur_idx+len(np.split(' ')):next_idx]
             if len(verb_relation) > 0:
+                sentiment = TextBlob(' '.join(words[cur_idx:next_idx])).sentiment.polarity
                 relations.append((np, next_np, verb_relation,
                     sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
         else:
