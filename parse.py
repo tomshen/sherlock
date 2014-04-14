@@ -28,7 +28,7 @@ def get_sentiment(blob):
         return 1
 
 def tb_parse(blob):
-    return [tuple(w.split('/')) for w in blob.parse().split(' ')]
+    return [w for s in blob.parse().split() for w in s]
 
 def preprocess(doc, np_extractor=None):
     paragraphs = [s.strip() for s in doc.split('\n') if '.' in s.strip()]
@@ -70,10 +70,13 @@ def extract_generic_relations(sentence, verb_phrases_only):
     for i in xrange(len(noun_phrases)-1):
         np = noun_phrases[i]
         next_np = noun_phrases[i+1]
-        cur_idx = words.index(np.split(' ')[0])
+        first_np_word = np.split(' ')[0]
+        cur_idx = words.index(first_np_word)
         next_idx = words.index(next_np.split(' ')[0])
-        if 'PNP' in parsed_sentence[cur_idx]:
-            continue
+
+        for word,_,_,pps in parsed_sentence:
+            if first_np_word in word and 'PNP' in pps:
+                continue
 
         sentiment = get_sentiment(sentence)
         if not verb_phrases_only:
