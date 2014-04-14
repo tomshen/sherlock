@@ -49,12 +49,10 @@ def ask_questions(filename, numQuestions, debug=False):
     randomized = random.sample(pairs, len(pairs))
     for (key, value) in randomized:
         entry = database[key][value]
-        
-                
+                        
         relation = entry['relation']
 
-        question = ""
-        
+        question = ""       
         rel = ""
         rel_tag = ""
         #print key, "KEY"
@@ -62,7 +60,7 @@ def ask_questions(filename, numQuestions, debug=False):
         contains_in = False
         for i in xrange(len(relation)):
             (word, tag) = relation[i]
-            if tag[0] == "V":
+            if tag[0] == "V" and word[0].islower():
                 rel += word
                 rel_tag = tag
                 if i+1 != len(relation):
@@ -105,7 +103,7 @@ def ask_questions(filename, numQuestions, debug=False):
             c_rel = conjugate(rel)
             #print c_rel
             
-            w_verb = "When" if is_date(value) else "What"
+            w_verb = "When" if is_date(value) else ("Who" if val_name else "What")
             if is_date(key):
                 x = "in"
                 if any(char.isdigit() for char in key): x = "on"
@@ -131,7 +129,7 @@ def ask_questions(filename, numQuestions, debug=False):
                         c_rel = split[1]
                     if be_rel:
                         c_rel = split[1]
-                        does_verb = rel.split(" ", 1)[0]
+                        does_verb = "are" if key_plural else "is"
                 else:
                     if rel_tag in ("VBD"):
                         does_verb = "did"
@@ -169,7 +167,7 @@ if __name__ == "__main__":
         numQuestions = int(sys.argv[2])
     except:
         #print "Invalid filename or numQuestions, using default values"
-        filename = 'data/set4/a6.txt'
+        filename = 'data/set1/a7.txt'
         numQuestions = 30
         
     #print "Generating %d questions from %s" % (numQuestions, filename)
