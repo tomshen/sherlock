@@ -41,7 +41,7 @@ def preprocess(doc, np_extractor=None):
 
 def extract_verb_phrases(blob):
     cp = nltk.RegexpParser(grammars.verb_phrase)
-    if len(blog.tags) == 0:
+    if len(blob.tags) == 0:
         return []
     tree = cp.parse(blob.tags)
     verb_phrases = []
