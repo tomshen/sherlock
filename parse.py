@@ -21,6 +21,12 @@ class SuperNPExtractor(BaseNPExtractor):
     def extract(self, text):
         return list(set(self.__fast.extract(text)) | set(self.__conll.extract(text)))
 
+def get_sentiment(blob):
+    if util.lists_overlap(['no','not','never','neither',"n't"], blob.raw.split()):
+        return -1
+    else:
+        return 1
+
 def tb_parse(blob):
     return [tuple(w.split('/')) for w in blob.parse().split(' ')]
 
@@ -69,6 +75,7 @@ def extract_generic_relations(sentence, verb_phrases_only):
         if 'PNP' in parsed_sentence[cur_idx]:
             continue
 
+        sentiment = get_sentiment(sentence)
         if not verb_phrases_only:
             is_verb = False
             for verb in [w for w, pos in sentence.tags if pos[0] == 'V']:
@@ -80,13 +87,11 @@ def extract_generic_relations(sentence, verb_phrases_only):
             if not is_verb: continue
             verb_relation = sentence.tags[cur_idx+len(np.split(' ')):next_idx]
             if len(verb_relation) > 0:
-                sentiment = TextBlob(' '.join(words[cur_idx:next_idx])).sentiment.polarity
                 relations.append((np, next_np, verb_relation,
                     sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
         else:
             for verb_phrase in verb_phrases:
                 if cur_idx < sentence.index(verb_phrase[0]) < next_idx:
-                    sentiment = TextBlob(' '.join(words[cur_idx:next_idx])).sentiment.polarity
                     relations.append((np, next_np, verb_phrase,
                         sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
                     break
