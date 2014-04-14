@@ -21,6 +21,9 @@ class SuperNPExtractor(BaseNPExtractor):
     def extract(self, text):
         return list(set(self.__fast.extract(text)) | set(self.__conll.extract(text)))
 
+def tb_parse(blob):
+    return [tuple(w.split('/')) for w in blob.parse().split(' ')]
+
 def preprocess(doc, np_extractor=None):
     paragraphs = [s.strip() for s in doc.split('\n') if s.strip()][1:] # strip out title
     if np_extractor == 'conll':
@@ -56,12 +59,15 @@ def extract_generic_relations(sentence, verb_phrases_only):
             continue
     noun_phrases = new_noun_phrases
     verb_phrases = extract_verb_phrases(sentence)
+    parsed_sentence = tb_parse(sentence)
 
     for i in xrange(len(noun_phrases)-1):
         np = noun_phrases[i]
         next_np = noun_phrases[i+1]
         cur_idx = words.index(np.split(' ')[0])
         next_idx = words.index(next_np.split(' ')[0])
+        if 'PNP' in parsed_sentence[cur_idx]:
+            continue
 
         if not verb_phrases_only:
             is_verb = False
