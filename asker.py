@@ -5,11 +5,25 @@ import parse
 import sys
 import random
 from sets import Set
+#from dateutil import parser
 from textblob import TextBlob, Word
 from nltk.corpus import wordnet as wn
 import string
 from textblob.taggers import NLTKTagger
 
+def is_date(s):
+    months = ("January", "February", "March", "April", \
+              "May", "June", "July", "August", "September", \
+              "October", "November", "December")
+    if any(month in s for month in months): return True
+    else: return False
+
+def conjugate(rel):
+    try:
+        split = rel.split(" ", 1)
+        return Word(split[0]).lemmatize("v") + " " + split[1]
+    except:
+        return Word(rel).lemmatize("v")
 
 def ask_questions(filename, numQuestions, debug=False):
     nltk_tagger = NLTKTagger()
@@ -23,63 +37,121 @@ def ask_questions(filename, numQuestions, debug=False):
     art = ("the", "an", "a", "The")
     pairs = []
     result = []
+    q_count = 0
     for key in database:
         if key[0] in string.punctuation: continue
+        if "." in key: continue
         for entry in database[key]:
             pairs += [(key, entry)]
-    if (numQuestions > len(pairs)):
-        selected = random.sample(pairs, len(pairs))
-    else: 
-        selected = random.sample(pairs, numQuestions)
-    for (key, value) in selected:
+    
+    randomized = random.sample(pairs, len(pairs))
+    for (key, value) in randomized:
         entry = database[key][value]
-        """syn = util.synonyms(value, False)
-        if (len(syn) != 0): 
-            print "replaced " + value
-            value = random.sample(syn, 1)[0]"""
-        key_plural = util.is_plural(key)
-        is_verb = "Are" if key_plural else "Is"
-        verb_phrase = [verb[0] for verb in entry['relation']]
-        #print verb_phrase
-        try:
-            verb = verb_phrase[0]
-        except: verb = "related"
+        
+                
+        relation = entry['relation']
+
         question = ""
-        if (verb == "is"):
-            if not value.startswith(art):
-                value = p.a(value)
-            question = "%s %s %s?" % (is_verb, key, value)       
-        elif (verb == "has"):
-            has_verb = "Do" if key_plural else "Does"
-            if not value.startswith(art):
-                value = p.a(value)
-            question = "%s %s have %s?" % (has_verb, key, value)
-        else:
-            blob = TextBlob(" ".join(verb_phrase), pos_tagger=nltk_tagger)
-            tags = blob.pos_tags
-            verbs = []
-            for w,tag in blob.pos_tags:
-                if tag[0] == "V":
-                    verbs += [(w, tag)]
-            action = [w for (w, tag) in verbs if tag != "VBZ"]
-            det_option = " the" if not key[0].isupper() else ""
-            #print " ".join(verb_phrase)
-            #print value
-            for (w, tag) in verbs:
-                if w.lemmatize("v") != "be":
-                    if tag == "VBD": does_verb = "did"
-                    else: does_verb = "does"
-                    question3 = "What %s%s %s %s?" % (det_option.capitalize(), does_verb, key, w.lemmatize("v"))
+        
+        rel = ""
+        rel_tag = ""
+        #print key, "KEY"
+        add = True
+        contains_in = False
+        for i in xrange(len(relation)):
+            (word, tag) = relation[i]
+            if tag[0] == "V":
+                rel += word
+                rel_tag = tag
+                if i+1 != len(relation):
+                    count = 1
+                    (nextword, nexttag) = relation[i+1]
+                    while ((nexttag.startswith(("IN", "TO", "V", "RB"))) \
+                        and (nextword not in ("that", "at", "also", "to", "in")) \
+                        and (nextword[0].islower())):
+                        if i+2 == len(relation) and (nexttag == "RB"):
+                            break
+                        elif nexttag == "IN": contains_in = True
+                        rel += " " + nextword
+                        count += 1
+                        if count + i >= len(relation): break
+                        (nextword, nexttag) = relation[i+count]
+                    if rel != "": break
+            elif ((tag in ("NNP", "NNS", "NN")) \
+                   and rel == "" and (word not in key) and add):
+                key += " " + word
+            else: add = False
+
+            
+        #print key, "NEW KEY"
+        #print value, "VALUE"
+        key_plural = util.is_plural(key)
+        #print relation
+        #print rel
+        if rel == "": continue
+        #print [(word, tag) for (word, tag) in relation], "RELATION"
+        det_option = " the" if not key[0].isupper() and key[0].isalpha() \
+                     else ""
+         
+        try:
+            value_tag = TextBlob(value).tags[0][1]
+            c_rel = conjugate(rel)
+            #print c_rel, contains_in
+            
+            w_verb = "When" if is_date(value) else "What"
+            if is_date(key):
+                x = "in"
+                if any(char.isdigit() for char in key): x = "on"
+                question = "What happened %s %s?" % (x, key)
+            elif c_rel != "be":
+                if " " in rel:
+                    split = c_rel.split(" ", 1)
+                    be_rel = split[0] == "be"
+                    if contains_in and not be_rel: c_rel = rel
+
+                    if rel_tag == "VBD":
+                        c_rel = rel
+                        does_verb = "did"
+                    elif key_plural:
+                        does_verb = "are"
+                    else: does_verb = "is"
+                    if rel_tag == "VB":
+                        does_verb = ""
+                        det_option = ""
+                    if (split[0] in ("can", "have")):
+                        if split[0] == "have": does_verb = "has"
+                        else: does_verb = "can"
+                        c_rel = split[1]
+                    if be_rel:
+                        c_rel = split[1]
+                        does_verb = rel.split(" ", 1)[0]
                 else:
-                    question3 = "%s%s %s %s?" % (w, det_option, key, value)
-                #print question3
-            det_option = " the" if not key[0].isupper() else ""
-            question2 = "%s%s %s %s %s?" % (is_verb, det_option, key, blob, value)
-            #print question2
-            question = "%s%s %s related to %s?" % (is_verb, det_option, key, value)
-        if (question != ""):
+                    if rel_tag in ("VBD"):
+                        does_verb = "did"
+                    elif key_plural: does_verb = "do"
+                    else: does_verb = "does"
+                
+                question = "%s %s%s %s %s?" % \
+                           (w_verb, does_verb, det_option, key, c_rel)                
+                
+            else:
+                verb_option = "" if (rel_tag != "VBN") else (" " + rel)
+                is_verb = "are" if key_plural else "is"
+                val_det_option = " the" if not value[0].isupper() else ""
+                question = "What %s%s %s%s?" %  (is_verb, det_option, key, verb_option)
+            #print w, tag, value
             print question
+            #print "\n"
+        except:
+            is_verb = "Are" if key_plural else "Is"
+            question = "%s%s %s related to %s?" % (is_verb, det_option, key, value)
+            print question
+            #print "\n"
+        if (question != ""):
+            q_count += 1
             result += [question]
+        if q_count == numQuestions: break
+    #print len(result)
     return result
         
         
@@ -90,7 +162,7 @@ if __name__ == "__main__":
         numQuestions = int(sys.argv[2])
     except:
         #print "Invalid filename or numQuestions, using default values"
-        filename = 'data/set1/a1.txt'
+        filename = 'data/set2/a1.txt'
         numQuestions = 30
         
     #print "Generating %d questions from %s" % (numQuestions, filename)
