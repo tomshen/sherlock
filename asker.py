@@ -28,12 +28,14 @@ def conjugate(rel):
 def ask_questions(filename, numQuestions, debug=False):
     nltk_tagger = NLTKTagger()
     p = inflect.engine()
-    try:
-        doc = util.load_article(filename)
-        database = parse.basic_parse(doc)
-    except:
-        print "Invalid filename: " + filename
-        sys.exit()
+
+    doc = util.load_article(filename)
+    database = parse.basic_parse(doc)
+
+    names = open("names.txt")
+    name_set = set()
+    for name in names.read().split(" "):
+        name_set.add(name.capitalize())
     art = ("the", "an", "a", "The")
     pairs = []
     result = []
@@ -85,6 +87,11 @@ def ask_questions(filename, numQuestions, debug=False):
             
         #print key, "NEW KEY"
         #print value, "VALUE"
+        val_name = False
+        for word in value.split(" "):
+            if word in name_set:
+                #print word, "FOUND NAME"
+                val_name = True
         key_plural = util.is_plural(key)
         #print relation
         #print rel
@@ -96,7 +103,7 @@ def ask_questions(filename, numQuestions, debug=False):
         try:
             value_tag = TextBlob(value).tags[0][1]
             c_rel = conjugate(rel)
-            #print c_rel, contains_in
+            #print c_rel
             
             w_verb = "When" if is_date(value) else "What"
             if is_date(key):
@@ -162,7 +169,7 @@ if __name__ == "__main__":
         numQuestions = int(sys.argv[2])
     except:
         #print "Invalid filename or numQuestions, using default values"
-        filename = 'data/set2/a1.txt'
+        filename = 'data/set4/a6.txt'
         numQuestions = 30
         
     #print "Generating %d questions from %s" % (numQuestions, filename)
