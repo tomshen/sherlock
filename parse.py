@@ -25,7 +25,7 @@ def tb_parse(blob):
     return [tuple(w.split('/')) for w in blob.parse().split(' ')]
 
 def preprocess(doc, np_extractor=None):
-    paragraphs = [s.strip() for s in doc.split('\n') if s.strip()][1:] # strip out title
+    paragraphs = [s.strip() for s in doc.split('\n') if '.' in s.strip()]
     if np_extractor == 'conll':
         return TextBlob('\n'.join(paragraphs), np_extractor=ConllExtractor())
     elif np_extractor == 'fast':
