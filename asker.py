@@ -110,7 +110,6 @@ def ask_questions(filename, numQuestions, debug=False):
                 if " " in rel:
                     split = c_rel.split(" ", 1)
                     be_rel = split[0] == "be"
-                    if contains_in and not be_rel: c_rel = rel
 
                     if rel_tag == "VBD":
                         does_verb = "did"
