@@ -14,8 +14,6 @@ import sentence_edit_distance as edit
 import np_util as n
 
 extractor = p.SuperNPExtractor()
-Relations = util.enum('REL', 'ISA', 'HASA')
-
 
 def compare_phrases(q_phrase, t_phrase, uncommon):
     q_words = [word.lemmatize() for word, tag in q_phrase]
@@ -24,8 +22,6 @@ def compare_phrases(q_phrase, t_phrase, uncommon):
         return [words[i-1:i+1] for i in xrange(1, len(words))]
     q_grams = get_bigrams(q_words)
     t_grams = get_bigrams(t_words)
-    print >> sys.stderr, q_grams
-    print >> sys.stderr, t_grams
     def judge_gram(target):
         if target in uncommon:
             return 3.5 + (1 if target.istitle() else 0)
@@ -37,24 +33,41 @@ def compare_phrases(q_phrase, t_phrase, uncommon):
                 for i in q_words if i in t_words]) - float(len(q_words))
     return (ans1, ans2, t_phrase)
 
-def parse_yn(q, database, raw):
-    #get 25th percentile words by frequency
-    #actually, just gets infrequent words
-    bigblob = TextBlob(raw, np_extractor=extractor)
-    freqdict = bigblob.word_counts
-    backwards = [(c, w) for w, c in freqdict.iteritems()]
-    cutoff = (0.25 * sum([c for c, w in backwards]))
-    best = 0
-    for c, w in sorted(backwards):
-        best = c
-        cutoff -= c
-        if cutoff < 0:
-            break
-    uncommon = [w for c, w in sorted(backwards) if 1 < c < 4]#best]
+def examine_rels(q, q_phrase, bestrels, uncommon, mode):
+    def taglist(l):
+        return [tag for word, tag in l]
+    if mode == 'IS':
+        comp1, comp2, rel = max([compare_phrases(q_phrase, relation, uncommon)
+                                 for best, relation in bestrels])
+        print >> sys.stderr, comp1, comp2
+        if comp1 >= -2 and comp2 >= 0:
+            #"at most 2 unmatched bigrams and 1 unmatched unigram"
+            return "Yes"
+        elif comp1 >= -2 and comp2 >= -1:
+            #if there's an unmatched unigram, it's either a red herring
+            #or good enough
+            print >> sys.stderr, q_phrase
+            print >> sys.stderr, rel
+            for word, tag in q_phrase:
+                if (word, tag) not in rel:
+                    if tag in ['IN', 'NNP', 'CD']:
+                        return "No"
+            return "Yes"
+
+    elif mode == 'WHAT':
+        first_tags = taglist(q[:3])
+        if (first_tags[1][:2] == 'VB' and
+            (first_tags[2][1] == 'N' or
+             first_tags[2] == 'DT')):
+            #what VB NP VP (what will Jake do,..)
+            #compare things
+            return "sleep"
+
+    #nothing found here
+    return ""
+
+def parse_first(q, database, uncommon, mode):
     words = q.words.lower()
-    #nps = q.noun_phrases
-    #nps = sorted([(np_idx(np, q), np) for np in nps])
-    #nps = [np for idx, np in nps]
     nps = n.nps
     tags = q.tags
     if len(nps) == 0:
@@ -69,90 +82,48 @@ def parse_yn(q, database, raw):
         #get index of the first word after the noun phrase
         loc = n.np_idx(subj, q)
         nexti = loc + len(subj.split()) + (1 if "'" in subj else 0)
-        #is that part of its own noun phrase? (det. or noun)
-        # nextword, nexttag = q.tags[nexti]
-        # print >> sys.stderr, nextword, nexttag
-        #nextnp = ""
-        #for np in nps:
-        #    if words.lower().index(np.split()[0]) == nexti:
-        #        nextnp = np
-        #        break
         subj_tags = n.get_np_tags(subj, q)
-        '''
-        if False:#len(nps) > 1:
-            nextnp = nps[1]
-            #if yes then look to see if they are related in the db
-            print >> sys.stderr, "\tfound nextnp:", nextnp
-            nextnp_tags = get_np_tags(nextnp, q)
-            close = get_similar_np(subj_tags, database)
-            print >> sys.stderr, "\t\tclose is:", close
-            if close:
-                closer = get_similar_np(nextnp_tags, database[close[0]])
-                if closer:
-                    return "Yes"
-            close = get_similar_np(nextnp_tags, database)
-            if close:
-                closer = get_similar_np(subj_tags, database[close[0]])
-                if closer:
-                    return "Yes"
-                    '''
-        #otherwise, assume it's an adjective phrase
-        #rebuild sentence fragments from database
+
+        #get potential relations from database
         closest = n.get_similar_np(subj_tags, database)
         if closest == None:
             #retry with partial noun phrases
             closest = n.get_similar_np(subj_tags[0:1], database)
             nexti = nexti + 1 - len(subj_tags)
-        #else:
-        #    more = n.get_similar_np(subj_tags[0:1], database)
-        #    closest += more if more != None else []
-        #    nexti = nexti + 1 - len(subj_tags)
         if closest == None:
             closest = n.get_similar_np(subj_tags[0:2], database)
             nexti = nexti + 1
-        if closest != None:
-            q_phrase = tags[nexti:]
-            print >> sys.stderr, q_phrase
-            if len(q_phrase) <= 1:
-                q_phrase = tags
-            rel_tags = [database[close][e]["relation"]
-                        + database[close][e]["pos"]
-                        for close in closest
-                        for e in database[close]]
-            #rel = [[word for word, tag in e] for e in rel_tags]
-            #compare to the AP
-            #best, relation = edit.distance(q_phrase, rel_tags)
-            bestrels = edit.distance(q_phrase, rel_tags)
-            comp1, comp2, rel = max([compare_phrases(q_phrase, relation, uncommon)
-                                     for best, relation in bestrels])
-            print >> sys.stderr, comp1, comp2
-            if comp1 >= -2 and comp2 >= 0:
-                return "Yes"
-            elif comp1 >= -2 and comp2 >= -1:
-                print >> sys.stderr, q_phrase
-                print >> sys.stderr, rel
-                for word, tag in q_phrase:
-                    if (word, tag) not in rel:
-                        if tag in ['IN', 'NNP', 'CD']:
-                            return "No"
-                return "Yes"
+        if closest == None:
+            return ""
+        q_phrase = tags[nexti:]
+        print >> sys.stderr, q_phrase
+        if len(q_phrase) <= 1:
+            q_phrase = tags
 
-            #if comp == -1 and len(q_phrase) != 2:
-            #    return "No"
-                #if len(nps) <= 1:
-                #    return "Yes"
-                #rel = [word for word, tag in relation]
-                #for np in nps[1:]:
-                #    if np in rel:
-                #        return "Yes"
-        return ""
+        #construct possible relations
+        rel_tags = [database[close][e]["relation"]
+                    + database[close][e]["pos"]
+                    for close in closest
+                    for e in database[close]]
+
+        #get the best, compare
+        bestrels = edit.distance(q_phrase, rel_tags)
+
+        return examine_rels(q, q_phrase, bestrels, uncommon, mode)
 
     elif first.lower() in ['does','did','will']:
         #question is a "does/did/will ___ VP"
         return "No"
     return "No"
 
-def parse_wh(q, database):
+def parse_second(q, blob, uncommon, mode):
+    sents = blob.sentences
+    q_phrase = q.tags[2:]
+    if mode == 'IS':
+        q_phrase = q.tags[1:0]
+    bestrels = edit.distance(q_phrase, [s.tags for s in sents if len(s.tags) > 6])
+    return examine_rels(q, q_phrase, bestrels, uncommon, mode)
+
     return ""
 
 def parse_question(question, database, raw):
@@ -162,11 +133,35 @@ def parse_question(question, database, raw):
     q = TextBlob(q, np_extractor=extractor)
     n.init_nps(q)
 
-    first_attempt = parse_yn(q, database, raw)
+    #get 25th percentile words by frequency
+    #actually, just gets infrequent words
+    bigblob = TextBlob(raw, np_extractor=extractor)
+    freqdict = bigblob.word_counts
+    backwards = [(c, w) for w, c in freqdict.iteritems()]
+    cutoff = (0.25 * sum([c for c, w in backwards]))
+    best = 0
+    #for c, w in sorted(backwards):
+    #    best = c
+    #    cutoff -= c
+    #    if cutoff < 0:
+    #        break
+    uncommon = [w for c, w in sorted(backwards) if 1 < c < 4]#best]
+
+    mode = q.words[0].upper()
+    if mode in ['IS', 'WAS', 'DO', 'DOES', 'DID', 'WILL']:
+        mode = 'IS'
+    else:
+        mode = "_".join(q.words[:2].upper())
+    print >> sys.stderr, mode
+
+    first_attempt = parse_first(q, database, uncommon, mode)
     if first_attempt != "":
         return first_attempt
-    second_attempt = b.backup_answer(q, n.nps, raw)
-    return second_attempt
+    second_attempt = parse_second(q, bigblob, uncommon, mode)
+    if second_attempt != "":
+        return second_attempt
+    third_attempt = b.backup_answer(q, n.nps, raw)
+    return third_attempt
     #print >> sys.stderr, 'error parsing question, resorting to backup'
     #return b.backup_answer(q, raw)
 
