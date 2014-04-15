@@ -39,6 +39,34 @@ def preprocess(doc, np_extractor=None):
     else:
         return TextBlob('\n'.join(paragraphs), np_extractor=SuperNPExtractor())
 
+def extract_named_entities(blob):
+    if len(blob.tags) == 0:
+        return {}
+    nes = []
+    ne_tree = nltk.chunk.ne_chunk(blob.tags)
+    last_is_name = False
+    for child in ne_tree:
+        if type(child) == nltk.tree.Tree:
+            named_entity = ' '.join(w for w,_ in child.leaves())
+            if child.node == 'PERSON':
+                if last_is_name:
+                    nes[-1] = (nes[-1][0] + ' ' + named_entity, nes[-1][1])
+                else:
+                    nes.append((named_entity, child.node))
+                last_is_name = True
+            else:
+                last_is_name = False
+                nes.append((named_entity, child.node))
+        else:
+            last_is_name = False
+    return dict(nes)
+
+def named_entity_type(named_entities, np):
+    for n in named_entities:
+        if n in np or np in n:
+            return named_entities[n]
+    return None
+
 def extract_verb_phrases(blob):
     cp = nltk.RegexpParser(grammars.verb_phrase)
     if len(blob.tags) == 0:
@@ -68,10 +96,13 @@ def extract_generic_relations(sentence, verb_phrases_only):
     noun_phrases = new_noun_phrases
     verb_phrases = extract_verb_phrases(sentence)
     parsed_sentence = tb_parse(sentence)
+    named_entities = extract_named_entities(sentence)
 
     for i in xrange(len(noun_phrases)-1):
         np = noun_phrases[i]
+        ne_key = named_entity_type(named_entities, np)
         next_np = noun_phrases[i+1]
+        ne_val = named_entity_type(named_entities, next_np)
         first_np_word = np.split(' ')[0]
         cur_idx = words.index(first_np_word)
         next_idx = words.index(next_np.split(' ')[0])
@@ -93,12 +124,12 @@ def extract_generic_relations(sentence, verb_phrases_only):
             verb_relation = sentence.tags[cur_idx+len(np.split(' ')):next_idx]
             if len(verb_relation) > 0:
                 relations.append((np, next_np, verb_relation,
-                    sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
+                    sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))], ne_key, ne_val))
         else:
             for verb_phrase in verb_phrases:
                 if cur_idx < sentence.index(verb_phrase[0]) < next_idx:
                     relations.append((np, next_np, verb_phrase,
-                        sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))]))
+                        sentiment, 1.0, sentence.tags[next_idx:next_idx+len(next_np.split(' '))], ne_key, ne_val))
                     break
     return relations
 
@@ -109,12 +140,14 @@ def basic_parse(doc, np_extractor=None, verb_phrases_only=False):
     database = {}
     for sentence in sentences:
         rels = extract_generic_relations(sentence, verb_phrases_only)
-        for key, val, relation, sentiment, certainty, pos in rels:
+        for key, val, relation, sentiment, certainty, pos, nek, nev in rels:
             database[key] = database.get(key, {})
             database[key][val] = {
                 'relation': relation,
                 'certainty': certainty,
                 'sentiment': sentiment,
-                'pos': pos
+                'pos': pos,
+                'named entity key': nek,
+                'named entity value': nev
             }
     return database

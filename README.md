@@ -23,7 +23,9 @@ Wikipedia article question answerer and asker
       "relation": [('is', 'VBZ'), ...],
       "certainty": 0.9, # a float in the interval (0, 1]
       "sentiment": 0.1, # a float in the interval [-1.0, 1.0]
-      "pos": [('Frenchromantic', 'JJ'), ('film', 'NN')]
+      "pos": [('Frenchromantic', 'JJ'), ('film', 'NN')],
+      "named entity key": "ORGANIZATION", # or None if not named entity
+      "named entity value": "GPE"
     },
     .
     .
