@@ -67,6 +67,29 @@ def named_entity_type(named_entities, np):
             return named_entities[n]
     return None
 
+def determine_question_type(question):
+    if type(question) != TextBlob:
+        question = TextBlob(question).words
+    if len(question) < 2:
+        return None
+    if question[0].lower() == 'who':
+        return 'PERSON'
+    elif question[0].lower() == 'what':
+        return 'OBJECT'
+    elif question[0].lower() == 'where':
+        return 'GPE'
+    elif question[0].lower() == 'when':
+        return 'DATETIME'
+    elif question[0].lower() == 'why':
+        return 'ABSTRACT'
+    elif question[0].lower() == 'how':
+        if question[1].lower() in ['many', 'much']:
+            return 'NUMBER'
+        else:
+            return 'VERB PHRASE'
+    else:
+        return None
+
 def extract_verb_phrases(blob):
     cp = nltk.RegexpParser(grammars.verb_phrase)
     if len(blob.tags) == 0:
