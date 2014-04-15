@@ -6,6 +6,7 @@ import unicodedata
 
 import nltk
 from textblob import TextBlob
+from textblob.blob import WordList
 from textblob.base import BaseNPExtractor
 from textblob.en.np_extractors import FastNPExtractor, ConllExtractor
 
@@ -68,7 +69,7 @@ def named_entity_type(named_entities, np):
     return None
 
 def determine_question_type(question):
-    if type(question) != TextBlob:
+    if type(question) != WordList:
         question = TextBlob(question).words
     if len(question) < 2:
         return None

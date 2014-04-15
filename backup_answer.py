@@ -67,8 +67,8 @@ def backup_answer(q, nps, raw):
         sent_nouns = back_data_sen[s]
         num_related.append(len([o for o in objs if o in sent_nouns]))
     if len(num_related) == 0:
-        #found nothing related, guess "No"
-        return "len(num_related) == 0"
+        #found nothing related, guess
+        return ""
     best, sent = sorted(zip(num_related, related_sents))[0]
     print >> sys.stderr, best, sent
     #print >> sys.stderr, "Best sentence was:"
