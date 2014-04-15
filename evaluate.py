@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+import sys
 
 import parse
 import question_answer_util as qau
@@ -27,7 +28,8 @@ def get_hard_questions():
         return difficulties.index(ans_diff) + difficulties.index(ques_diff) >= 5
     return [qa for qa in util.load_team_qa() if hard_question(qa)]
 
-def main():
+def easy():
+    print 'Evaluating on easy questions...'
     easy_questions = get_easy_questions()
     articles = {}
     count = 0
@@ -50,6 +52,52 @@ def main():
         print
     print 'Proportion correct: %.3f' % (float(correct) / count)
 
+def medium():
+    print 'Evaluating on medium questions...'
+    questions = get_medium_questions()
+    articles = {}
+    count = 0
+    correct = 0
+    for qa in questions:
+        if qa['path'] not in articles:
+            doc = util.load_article('data/' + qa['path'] + '.txt')
+            database = parse.basic_parse(doc)
+            articles[qa['path']] = (doc, database)
+        doc, database = articles[qa['path']]
+        question = qa['qns_text']
+        correct_answer = qa['answer']
+        our_answer = qau.parse_question(question, database, doc)
+        print ('-' * 50)
+        print 'Question: %s' % question
+        print 'Correct answer: %s' % correct_answer
+        print 'Our answer: %s' % our_answer
+        print ('-' * 50)
+
+def hard():
+    print 'Evaluating on hard questions...'
+    questions = get_hard_questions()
+    articles = {}
+    count = 0
+    correct = 0
+    for qa in questions:
+        if qa['path'] not in articles:
+            doc = util.load_article('data/' + qa['path'] + '.txt')
+            database = parse.basic_parse(doc)
+            articles[qa['path']] = (doc, database)
+        doc, database = articles[qa['path']]
+        question = qa['qns_text']
+        correct_answer = qa['answer']
+        our_answer = qau.parse_question(question, database, doc)
+        print ('-' * 50)
+        print 'Question: %s' % question
+        print 'Correct answer: %s' % correct_answer
+        print 'Our answer: %s' % our_answer
+        print ('-' * 50)
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) == 1 or sys.argv[1] == 'easy':
+        easy()
+    elif sys.argv[1] == 'medium':
+        medium()
+    elif sys.argv[1] == 'hard':
+        hard()
