@@ -55,7 +55,7 @@ def ask_questions(filename, numQuestions, debug=False):
         question = ""       
         rel = ""
         rel_tag = ""
-        #print key, "KEY"
+        #print key, "KEY", entry["named entity key"]
         add = True
         contains_in = False
         for i in xrange(len(relation)):
@@ -84,12 +84,8 @@ def ask_questions(filename, numQuestions, debug=False):
 
             
         #print key, "NEW KEY"
-        #print value, "VALUE"
-        val_name = False
-        for word in value.split(" "):
-            if word in name_set:
-                #print word, "FOUND NAME"
-                val_name = True
+        #print value, "VALUE", entry["named entity value"]
+        val_name = entry["named entity value"] == "PERSON"
         key_plural = util.is_plural(key)
         #print relation
         #print rel
@@ -101,9 +97,11 @@ def ask_questions(filename, numQuestions, debug=False):
         try:
             value_tag = TextBlob(value).tags[0][1]
             c_rel = conjugate(rel)
-            #print c_rel
+            #print rel, rel_tag, c_rel
             
-            w_verb = "When" if is_date(value) else ("Who" if val_name else "What")
+            w_verb = "When" if is_date(value) else ("Who" if \
+                        entry["named entity value"] == "PERSON" else \
+                        ("Where" if entry["named entity value"] == "GPE" else "What"))
             if is_date(key):
                 x = "in"
                 if any(char.isdigit() for char in key): x = "on"
@@ -115,27 +113,26 @@ def ask_questions(filename, numQuestions, debug=False):
                     if contains_in and not be_rel: c_rel = rel
 
                     if rel_tag == "VBD":
-                        c_rel = rel
                         does_verb = "did"
                     elif key_plural:
                         does_verb = "are"
-                    else: does_verb = "is"
-                    if rel_tag == "VB":
-                        does_verb = ""
+                    elif rel_tag == "VBZ":
+                        does_verb = "do" if key_plural else "does"
+                    elif rel_tag == "VB":
+                        does_verb = "do" if key_plural else "does"
                         det_option = ""
+                    else: does_verb = "is"
                     if (split[0] in ("can", "have")):
                         if split[0] == "have": does_verb = "has"
                         else: does_verb = "can"
                         c_rel = split[1]
                     if be_rel:
                         c_rel = split[1]
-                        does_verb = "are" if key_plural else "is"
+                        does_verb = rel.split(" ", 1)[0]
                 else:
-                    if rel_tag in ("VBD"):
+                    if rel_tag == "VBD":
                         does_verb = "did"
-                    elif key_plural: does_verb = "do"
-                    else: does_verb = "does"
-                
+                    else: does_verb = "do" if key_plural else "does"                
                 question = "%s %s%s %s %s?" % \
                            (w_verb, does_verb, det_option, key, c_rel)                
                 
@@ -143,7 +140,10 @@ def ask_questions(filename, numQuestions, debug=False):
                 verb_option = "" if (rel_tag != "VBN") else (" " + rel)
                 is_verb = "are" if key_plural else "is"
                 val_det_option = " the" if not value[0].isupper() else ""
-                question = "What %s%s %s%s?" %  (is_verb, det_option, key, verb_option)
+                w_verb = "Who" if (entry["named entity key"] == "PERSON" and \
+                                   verb_option == "") else "What"
+                question = "%s %s%s %s%s?" %  (w_verb, is_verb, det_option, key, \
+                                               verb_option)
             #print w, tag, value
             print question
             #print "\n"
@@ -156,7 +156,6 @@ def ask_questions(filename, numQuestions, debug=False):
             q_count += 1
             result += [question]
         if q_count == numQuestions: break
-    #print len(result)
     return result
         
         
@@ -167,7 +166,7 @@ if __name__ == "__main__":
         numQuestions = int(sys.argv[2])
     except:
         #print "Invalid filename or numQuestions, using default values"
-        filename = 'data/set1/a7.txt'
+        filename = 'data/set1/a5.txt'
         numQuestions = 30
         
     #print "Generating %d questions from %s" % (numQuestions, filename)
