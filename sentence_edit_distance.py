@@ -31,32 +31,40 @@ def distance(target, data):
         return targetWord.lemmatize() == phraseWord.lemmatize()
 
     def compareTags((targetWord, ttag), (phraseWord, ptag)):
-        return ttag[0] == ptag[0]
+        return ttag == ptag
 
     for phrase in di:
         grid = newgrid
+        if len(phrase) > 100:
+            continue
         for i in xrange(1, 1+len(target)):
             prev = i
             for j in xrange(1, 1+len(phrase)):
                 if compareWords(target[i-1], phrase[j-1]):
-                    grid[i][j] = grid[i-1][j-1]
+                    grid[i][j] = grid[i-1][j-1] - 1
                     continue
                 if (i > 1 and j > 1 and
                     compareWords(target[i-2], phrase[j-1]) and
                     compareWords(target[i-1], phrase[j-2])):
-                    grid[i][j] = grid[i-2][j-2] + 1
+                    grid[i][j] = grid[i-2][j-2] + 5
                     continue
-                d1 = grid[i-1][j] + 1
-                d2 = grid[i][j-1] + 1
-                d3 = grid[i-1][j-1] + 2 if compareTags(target[i-1], phrase[j-1]) else 100
-                prev = min([d1, d2, d3])
+                try:
+                    d1 = grid[i-1][j] + 3
+                    d2 = grid[i][j-1] + 1
+                    d3 = grid[i-1][j-1] + 2 if compareTags(target[i-1], phrase[j-1]) else 100
+                    prev = min([d1, d2, d3])
+                except:
+                    prev = 0
+                    print >> sys.stderr, i, j
+                    print >> sys.stderr, target
+                    print >> sys.stderr, phrase
                 grid[i][j] = prev
         score = grid[len(target)][len(phrase)]
         scores.append((score, phrase))
 
-    print >> sys.stderr, sorted(scores)[:3]
-    best, phrase = min(scores)
-    return float(best) / len(phrase), phrase
+    print >> sys.stderr, sorted(scores)[0]
+    #best, phrase = min(scores)
+    return sorted(scores)[:3]
 
 def editDistance(target):
     global di
